@@ -100,9 +100,12 @@ class Engine():
         return attacks
     
     def mask_king_attacks(self, square):
+        # generates all moves for a king
+        # like a knight
         attacks = 0
         king = 0
-
+        
+        # base square
         king = self.turn_bit_on(king, self.squares[square])
 
         # vertical
@@ -116,8 +119,88 @@ class Engine():
         
 
         return attacks
-
     
+    def mask_bishop_attacks(self, square):
+        # generates all possible bishop attacks for a square
+        attacks = 0 
+        bishop = 0
+        # square value necessary for calculations
+        square_value = self.squares[square]
+        #debugging
+        bishop = self.turn_bit_on(bishop, square_value)
+        # which direction are the rays gonna go
+        positive_ray = 7
+        negative_ray = 1
+
+        rank = square_value // 8
+        file = square_value % 8
+        # NoEa
+        while rank <= positive_ray - 1 and file <= positive_ray - 1:
+            rank += 1
+            file += 1
+            attacks |= self.lshift(1, rank*8 + file)
+
+        rank = square_value // 8
+        file = square_value % 8
+        # NoWe
+        while rank <= positive_ray and file >= negative_ray:
+            rank += 1
+            file -= 1
+            attacks |= self.lshift(1, rank*8 + file)
+        
+
+        rank = square_value // 8
+        file = square_value % 8
+        # SoEa
+        while rank >= negative_ray and file <= positive_ray - 1:
+            rank -= 1
+            file += 1
+            attacks |= self.lshift(1, rank*8 + file)
+
+        rank = square_value // 8
+        file = square_value % 8
+        # SoWe
+        while rank >= negative_ray and file >= negative_ray:
+            rank -= 1
+            file -= 1
+            attacks |= self.lshift(1, rank*8 + file)
+        
+        return attacks
+
+        
+
+    def mask_rook_attacks(self, square):
+        attacks = 0
+        rook = 0
+        square_value = self.squares[square]
+
+        rook = self.turn_bit_on(rook, square_value)
+
+        rook_rank = square_value // 8
+        rook_file = square_value % 8
+
+        positive_ray = 8
+        negative_ray = -1
+
+        for rank in range(rook_rank+1, positive_ray):
+            attacks |= self.lshift(1, rank*8 + rook_file) 
+        
+        for file in range(rook_file+1, positive_ray):
+            attacks |= self.lshift(1, rook_rank*8 + file)
+        
+        for rank in range(rook_rank-1, negative_ray, -1):
+            attacks |= self.lshift(1, rank*8 + rook_file)
+
+        for file in range(rook_file-1, negative_ray, -1):
+            attacks |= self.lshift(1, rook_rank*8 + file)
+
+        return attacks
+    
+    def mask_queen_attacks(self, square):
+        attacks = 0
+        attacks |= self.mask_bishop_attacks(square)
+        attacks |= self.mask_rook_attacks(square)
+        self.print_bitboard(attacks)
 
 engine = Engine()
-engine.print_bitboard(engine.lshift(engine.turn_bit_on(0, engine.squares['a4']), 9))
+engine.mask_queen_attacks('a2')
