@@ -120,8 +120,9 @@ class Engine():
 
         return attacks
     
-    def mask_bishop_attacks(self, square):
+    def relative_bishop_attacks(self, square):
         # generates all possible bishop attacks for a square
+        # without blocking (x-ray)
         attacks = 0 
         bishop = 0
         # square value necessary for calculations
@@ -129,8 +130,8 @@ class Engine():
         #debugging
         bishop = self.turn_bit_on(bishop, square_value)
         # which direction are the rays gonna go
-        positive_ray = 7
-        negative_ray = 1
+        positive_ray = 6
+        negative_ray = 2
 
         rank = square_value // 8
         file = square_value % 8
@@ -143,7 +144,7 @@ class Engine():
         rank = square_value // 8
         file = square_value % 8
         # NoWe
-        while rank <= positive_ray and file >= negative_ray:
+        while rank <= positive_ray - 1  and file >= negative_ray:
             rank += 1
             file -= 1
             attacks |= self.lshift(1, rank*8 + file)
@@ -169,7 +170,102 @@ class Engine():
 
         
 
-    def mask_rook_attacks(self, square):
+    def relative_rook_attacks(self, square):
+        # generates all possible rook attacks
+        # without piece blocking (x-ray)
+        attacks = 0
+        rook = 0
+        square_value = self.squares[square]
+
+        rook = self.turn_bit_on(rook, square_value)
+
+        rook_rank = square_value // 8
+        rook_file = square_value % 8
+
+        positive_ray = 7
+        negative_ray = 0
+        # North
+        for rank in range(rook_rank+1, positive_ray):
+            attacks |= self.lshift(1, rank*8 + rook_file) 
+        # East
+        for file in range(rook_file+1, positive_ray):
+            attacks |= self.lshift(1, rook_rank*8 + file)
+        # South
+        for rank in range(rook_rank-1, negative_ray, -1):
+            attacks |= self.lshift(1, rank*8 + rook_file)
+        # West
+        for file in range(rook_file-1, negative_ray, -1):
+            attacks |= self.lshift(1, rook_rank*8 + file)
+
+        return attacks
+    
+    def relative_queen_attacks(self, square):
+        # queen absolute attacsk are absolute rook and bishop attacks combined
+        attacks = 0
+        attacks |= self.relative_bishop_attacks(square)
+        attacks |= self.relative_rook_attacks(square)
+
+        return attacks
+    
+    def absolute_bishop_attacks(self, square, blocker):
+        # generates all possible bishop attacks for a square
+        # but pieces block
+        attacks = 0 
+        bishop = 0
+        # square value necessary for calculations
+        square_value = self.squares[square]
+        #debugging
+        bishop = self.turn_bit_on(bishop, square_value)
+        # which direction are the rays gonna go
+        positive_ray = 7
+        negative_ray = 1
+
+        rank = square_value // 8
+        file = square_value % 8
+        # NoEa
+        while rank <= positive_ray - 1 and file <= positive_ray - 1:
+            rank += 1
+            file += 1
+            attacks |= self.lshift(1, rank*8 + file)
+            if attacks & blocker:
+                break
+
+        rank = square_value // 8
+        file = square_value % 8
+        # NoWe
+        while rank <= positive_ray and file >= negative_ray:
+            rank += 1
+            file -= 1
+            attacks |= self.lshift(1, rank*8 + file)
+            if attacks & blocker:
+                break
+        
+
+        rank = square_value // 8
+        file = square_value % 8
+        # SoEa
+        while rank >= negative_ray and file <= positive_ray - 1:
+            rank -= 1
+            file += 1
+            attacks |= self.lshift(1, rank*8 + file)
+            if attacks & blocker:
+                break
+
+        rank = square_value // 8
+        file = square_value % 8
+        # SoWe
+        while rank >= negative_ray and file >= negative_ray:
+            rank -= 1
+            file -= 1
+            attacks |= self.lshift(1, rank*8 + file)
+            if attacks & blocker:
+                break
+        
+        return attacks
+    
+    def absolute_rook_attacks(self, square, blocker):
+        # generates all possible bishop attacks for a square
+        # but pieces block
         attacks = 0
         rook = 0
         square_value = self.squares[square]
@@ -181,26 +277,37 @@ class Engine():
 
         positive_ray = 8
         negative_ray = -1
-
+        # North
         for rank in range(rook_rank+1, positive_ray):
-            attacks |= self.lshift(1, rank*8 + rook_file) 
-        
+            attacks |= self.lshift(1, rank*8 + rook_file)
+            # breaks if a piece blocks the ray
+            if attacks & blocker:
+                break
+        # East
         for file in range(rook_file+1, positive_ray):
             attacks |= self.lshift(1, rook_rank*8 + file)
-        
+            if attacks & blocker:
+                break
+        # South
         for rank in range(rook_rank-1, negative_ray, -1):
             attacks |= self.lshift(1, rank*8 + rook_file)
-
+            if attacks & blocker:
+                break
+        # West
         for file in range(rook_file-1, negative_ray, -1):
             attacks |= self.lshift(1, rook_rank*8 + file)
+            if attacks & blocker:
+                break
 
         return attacks
     
-    def mask_queen_attacks(self, square):
+    def absolute_queen_attacks(self, square, blocker):
+        # queen absolute attacsk are absolute rook and bishop attacks combined
         attacks = 0
-        attacks |= self.mask_bishop_attacks(square)
-        attacks |= self.mask_rook_attacks(square)
-        self.print_bitboard(attacks)
+        attacks |= self.absolute_bishop_attacks(square, blocker)
+        attacks |= self.absolute_rook_attacks(square, blocker)
+
+        return attacks
 
 engine = Engine()
-engine.mask_queen_attacks('a2')
+engine.print_bitboard(engine.absolute_queen_attacks('e4', 0))
