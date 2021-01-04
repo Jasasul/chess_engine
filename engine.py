@@ -48,6 +48,25 @@ class Engine():
         # sets a bit at a index to 1
         return bitboard | self.lshift(1, index)
     
+    def count_bits_on(self, bitboard):
+        # counts bits that are set to 1 in a number
+        bits = 0
+        for i in range(64):
+            if self.rshift(bitboard, i) & 1:
+                bits += 1
+        
+        return bits
+    
+    def get_lsb(self, bitboard):
+        # finds the least significant bit (bit with the lowest index set to 1)
+        for i in range(64):
+            if self.rshift(bitboard, i) & 1:
+                return i
+    
+    def get_msb(self, bitboard):
+        # finds the most significaant bit (bit with the highest index set to 1)
+        return len(bin(bitboard)[2:]) - 1
+    
     def mask_pawn_attacks(self, square, side):
         # generates both pawn attacks (diagonals) for a square
         # white is up (lshift), black is down(rshift)
@@ -211,11 +230,16 @@ class Engine():
         # generates all possible bishop attacks for a square
         # but pieces block
         attacks = 0 
-        bishop = 0
+        
+        # separate piece attacks
+        first = 0
+        second = 0
+        third = 0
+        fourth = 0
+
         # square value necessary for calculations
         square_value = self.squares[square]
-        #debugging
-        bishop = self.turn_bit_on(bishop, square_value)
+
         # which direction are the rays gonna go
         positive_ray = 7
         negative_ray = 1
@@ -226,8 +250,8 @@ class Engine():
         while rank <= positive_ray - 1 and file <= positive_ray - 1:
             rank += 1
             file += 1
-            attacks |= self.lshift(1, rank*8 + file)
-            if attacks & blocker:
+            first |= self.lshift(1, rank*8 + file)
+            if first & blocker:
                 break
 
         rank = square_value // 8
@@ -236,8 +260,8 @@ class Engine():
         while rank <= positive_ray and file >= negative_ray:
             rank += 1
             file -= 1
-            attacks |= self.lshift(1, rank*8 + file)
-            if attacks & blocker:
+            second |= self.lshift(1, rank*8 + file)
+            if second & blocker:
                 break
         
 
@@ -247,8 +271,8 @@ class Engine():
         while rank >= negative_ray and file <= positive_ray - 1:
             rank -= 1
             file += 1
-            attacks |= self.lshift(1, rank*8 + file)
-            if attacks & blocker:
+            third |= self.lshift(1, rank*8 + file)
+            if third & blocker:
                 break
 
         rank = square_value // 8
@@ -257,9 +281,11 @@ class Engine():
         while rank >= negative_ray and file >= negative_ray:
             rank -= 1
             file -= 1
-            attacks |= self.lshift(1, rank*8 + file)
-            if attacks & blocker:
+            fourth |= self.lshift(1, rank*8 + file)
+            if fourth & blocker:
                 break
+
+        attacks |= first | second | third | fourth
         
         return attacks
     
@@ -267,10 +293,14 @@ class Engine():
         # generates all possible bishop attacks for a square
         # but pieces block
         attacks = 0
-        rook = 0
+        # separate piece attacks
+        first = 0
+        second = 0
+        third = 0
+        fourth = 0
+        # square
         square_value = self.squares[square]
 
-        rook = self.turn_bit_on(rook, square_value)
 
         rook_rank = square_value // 8
         rook_file = square_value % 8
@@ -279,25 +309,27 @@ class Engine():
         negative_ray = -1
         # North
         for rank in range(rook_rank+1, positive_ray):
-            attacks |= self.lshift(1, rank*8 + rook_file)
+            first |= self.lshift(1, rank*8 + rook_file)
             # breaks if a piece blocks the ray
-            if attacks & blocker:
+            if first & blocker:
                 break
         # East
         for file in range(rook_file+1, positive_ray):
-            attacks |= self.lshift(1, rook_rank*8 + file)
-            if attacks & blocker:
+            second |= self.lshift(1, rook_rank*8 + file)
+            if second & blocker:
                 break
         # South
         for rank in range(rook_rank-1, negative_ray, -1):
-            attacks |= self.lshift(1, rank*8 + rook_file)
-            if attacks & blocker:
+            third |= self.lshift(1, rank*8 + rook_file)
+            if third & blocker:
                 break
         # West
         for file in range(rook_file-1, negative_ray, -1):
-            attacks |= self.lshift(1, rook_rank*8 + file)
-            if attacks & blocker:
+            fourth |= self.lshift(1, rook_rank*8 + file)
+            if fourth & blocker:
                 break
+        
+        attacks |= first | second | third | fourth
 
         return attacks
     
@@ -310,4 +342,4 @@ class Engine():
         return attacks
 
 engine = Engine()
-engine.print_bitboard(engine.absolute_queen_attacks('e4', 0))
+blocker = 0
