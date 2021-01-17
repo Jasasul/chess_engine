@@ -1,10 +1,11 @@
 import textwrap
 import math
+import random as rn
 
 class Engine():
     def __init__(self):
         # bitboard has 64 squares - 1 bit per square, no need to store more
-        self.bitboard_length_mask = int('1'*64, 2)
+        self.mask_64 = int('1'*64, 2)
         # square mapping - little endian a1, b1, ... g8, h8 = 0, 1, ... 63, 63
         self.square_names = ['a1', 'b1', 'c1', 'd1', 'e1', 'f1', 'g1', 'h1',
                              'a2', 'b2', 'c2', 'd2', 'e2', 'f2', 'g2', 'h2',
@@ -24,6 +25,32 @@ class Engine():
         self.not_h_file = 0x7f7f7f7f7f7f7f7f
         self.not_gh_file = 0x3f3f3f3f3f3f3f3f
         self.not_ab_file = 0xfcfcfcfcfcfcfcfc
+        self.first_rank = 0x0101010101010101
+        self.eight_rank = 0x8080808080808080
+        self.light_squares = 0x55AA55AA55AA55AA
+        self.dark_squares = 0xAA55AA55AA55AA55
+        
+        self.bishop_relevant_occupancy = [
+            6, 5, 5, 5, 5, 5, 5, 6, 
+            5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 7, 7, 7, 7, 5, 5,
+            5, 5, 7, 9, 9, 7, 5, 5,
+            5, 5, 7, 9, 9, 7, 5, 5,
+            5, 5, 7, 7, 7, 7, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5,
+            6, 5, 5, 5, 5, 5, 5, 6,
+        ]
+        self.rook_relevant_occupancy = [
+            12, 11, 11, 11, 11, 11, 11, 12,
+            11, 10, 10, 10, 10, 10, 10, 11,
+            11, 10, 10, 10, 10, 10, 10, 11,
+            11, 10, 10, 10, 10, 10, 10, 11,
+            11, 10, 10, 10, 10, 10, 10, 11,
+            11, 10, 10, 10, 10, 10, 10, 11,
+            11, 10, 10, 10, 10, 10, 10, 11,
+            12, 11, 11, 11, 11, 11, 11, 12,
+        ]
+            
 
         self.white = 1
         self.black = 0
@@ -38,7 +65,7 @@ class Engine():
     
     def lshift(self, bitboard, bits):
         # shifts bitboard to the left, discarding bits exceeding 64 bit format
-        return (bitboard << bits) & self.bitboard_length_mask
+        return (bitboard << bits) & self.mask_64
     
     def rshift(self, bitboard, bits):
         # shifts bitboard to the right, discarding bits exceeding 0
@@ -48,7 +75,10 @@ class Engine():
         # sets a bit at a index to 1
         return bitboard | self.lshift(1, index)
     
-    def count_bits_on(self, bitboard):
+    def turn_bit_off(self, bitboard, index):
+        return bitboard ^ self.lshift(1, index)
+    
+    def bit_count(self, bitboard):
         # counts bits that are set to 1 in a number
         bits = 0
         for i in range(64):
@@ -66,6 +96,9 @@ class Engine():
     def get_msb(self, bitboard):
         # finds the most significaant bit (bit with the highest index set to 1)
         return len(bin(bitboard)[2:]) - 1
+    
+    def square_to_coordinates(self, square):
+        return self.square_names[square]
     
     def mask_pawn_attacks(self, square, side):
         # generates both pawn attacks (diagonals) for a square
@@ -218,14 +251,6 @@ class Engine():
 
         return attacks
     
-    def relative_queen_attacks(self, square):
-        # queen absolute attacsk are absolute rook and bishop attacks combined
-        attacks = 0
-        attacks |= self.relative_bishop_attacks(square)
-        attacks |= self.relative_rook_attacks(square)
-
-        return attacks
-    
     def absolute_bishop_attacks(self, square, blocker):
         # generates all possible bishop attacks for a square
         # but pieces block
@@ -333,13 +358,14 @@ class Engine():
 
         return attacks
     
-    def absolute_queen_attacks(self, square, blocker):
-        # queen absolute attacsk are absolute rook and bishop attacks combined
-        attacks = 0
-        attacks |= self.absolute_bishop_attacks(square, blocker)
-        attacks |= self.absolute_rook_attacks(square, blocker)
-
-        return attacks
+    def set_occupancy(self, index, bits_in_mask, attack_mask):
+        occupancy = 0
+        for i in range(bits_in_mask):
+            square = self.get_lsb(attack_mask)
+            attack_mask = engine.turn_bit_off(attack_mask, square)
+            if index & self.lshift(1, i):
+                occupancy |= self.lshift(1, square)
+        
+        return occupancy
 
 engine = Engine()
-blocker = 0
