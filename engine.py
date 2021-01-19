@@ -4,8 +4,6 @@ import random as rn
 
 class Engine():
     def __init__(self):
-        # bitboard has 64 squares - 1 bit per square, no need to store more
-        self.mask_64 = int('1'*64, 2)
         # square mapping - little endian a1, b1, ... g8, h8 = 0, 1, ... 63, 63
         self.square_names = ['a1', 'b1', 'c1', 'd1', 'e1', 'f1', 'g1', 'h1',
                              'a2', 'b2', 'c2', 'd2', 'e2', 'f2', 'g2', 'h2',
@@ -21,6 +19,9 @@ class Engine():
         # files that would cause piece moves overlaps from a file to h and vice versa
         # are ignored during move genration for certain pieces
         # binary form is shorter
+        self.random_state = 1804289383
+        self.mask_64 = 0xffffffffffffffff
+        self.mask_32 = 0xffffffff
         self.not_a_file = 0xfefefefefefefefe
         self.not_h_file = 0x7f7f7f7f7f7f7f7f
         self.not_gh_file = 0x3f3f3f3f3f3f3f3f
@@ -99,6 +100,22 @@ class Engine():
     
     def square_to_coordinates(self, square):
         return self.square_names[square]
+
+    def random_32b(self):
+        number = self.random_state
+        number ^= self.lshift(number, 13) & self.mask_32
+        number ^= self.rshift(number, 17) & self.mask_32
+        number ^= self.lshift(number, 5) & self.mask_32
+        self.random_state = number
+        return number
+    
+    def random_64b(self):
+        a = self.random_32b() & 0xffff
+        b = self.random_32b() & 0xffff
+        c = self.random_32b() & 0xffff
+        d = self.random_32b() & 0xffff
+
+        return a | self.lshift(b, 16) | self.lshift(c, 32) | self.lshift(d, 48)
     
     def mask_pawn_attacks(self, square, side):
         # generates both pawn attacks (diagonals) for a square
@@ -172,7 +189,7 @@ class Engine():
 
         return attacks
     
-    def relative_bishop_attacks(self, square):
+    def mask_bishop_attacks(self, square):
         # generates all possible bishop attacks for a square
         # without blocking (x-ray)
         attacks = 0 
@@ -222,7 +239,7 @@ class Engine():
 
         
 
-    def relative_rook_attacks(self, square):
+    def mask_rook_attacks(self, square):
         # generates all possible rook attacks
         # without piece blocking (x-ray)
         attacks = 0
@@ -368,4 +385,8 @@ class Engine():
         
         return occupancy
 
+
 engine = Engine()
+bitboard = 0
+bitboard = engine.turn_bit_on(bitboard, engine.squares['e4'])
+pawn_attacks = engine.mask_pawn_attacks('a1', 1)
