@@ -85,7 +85,7 @@ def kindergarten_multipication(x, y):
     return np.uint64((int(x) * int(y)) & MASK_64)
 
 
-def mask_pawn_attacks(i, color):
+def mask_pawn_attacks(color, i):
     # gets attacks set for a pawn of a given color on a given square
     attacks = np.uint64(0)
     sq = Square(i)
@@ -218,7 +218,7 @@ PAWN_ATTACKS = np.zeros((2, 64), dtype=np.uint64)
 for color in Color:
     for i in range(64):
         # 2 colors (white, black), 64 squares
-        PAWN_ATTACKS[color][i] = mask_pawn_attacks(i, color)
+        PAWN_ATTACKS[color][i] = mask_pawn_attacks(color, i)
 
 KNIGHT_ATTACKS = np.zeros(64, dtype=np.uint64)
 # knight attacks table
