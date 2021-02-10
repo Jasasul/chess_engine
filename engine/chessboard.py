@@ -12,14 +12,22 @@ class Chessboard(object):
         self.occupancy = np.uint64(0)
         self.turn = np.uint64(0)
         self.castle = np.zeros(4, dtype=np.uint64)
-        self.enpassant = False
+        self.en_passant = None
         self.halfmove = np.uint64(0)
         self.fullmove = np.uint64(0)
-        self.test_fen = '1r1q1rk1/2p1nppp/3p4/1p1bP3/5P2/2P1B2Q/B1P3PP/R4RK1 w - - 1 21'
-        self.set_board(self.test_fen)
+        self.start_fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
     def set_board(self, fen):
         # sets a chessboard object according a fen string
+        self.pieces = np.zeros((2, 6), dtype=np.uint64)
+        self.colors = np.zeros(2, dtype=np.uint64)
+        self.occupancy = np.uint64(0)
+        self.turn = np.uint64(0)
+        self.castle = np.zeros(4, dtype=np.uint64)
+        self.enpassant = False
+        self.halfmove = np.uint64(0)
+        self.fullmove = np.uint64(0)
+
         fen_parts = fen.split()
         rank = 7
         file = 0
@@ -32,20 +40,20 @@ class Chessboard(object):
             # from A to H file
             sq = Square(8*rank + file)
             if char >= '1' and char <= '8':
-                # empty square 1-8
+                # empty square (1-8)
                 file += int(char)
             if char.upper() in self.piece_chars:
                 # there is a piece
                 # set it to its bitboard
                 if char.isupper():
                     # white piece
-                    bitboard = hp.bit_on(
+                    bitboard = hp.set_bit(
                         self.pieces[Color.WHITE][self.piece_chars.index(char)],
                         sq.index)
                     self.pieces[Color.WHITE][self.piece_chars.index(char)] = bitboard
                 if char.islower():
                     # black piece
-                    bitboard = hp.bit_on(
+                    bitboard = hp.set_bit(
                         self.pieces[Color.BLACK][self.piece_chars.index(char.upper())],
                         sq.index)
                     self.pieces[Color.BLACK][self.piece_chars.index(char.upper())] = bitboard
@@ -67,12 +75,12 @@ class Chessboard(object):
                 self.castle[self.castle_chars.index(char)] = 1
         # en passant target square if any
         if fen_parts[3] != '-':
-            self.enpassant = Square.get_index(fen_parts[3])
-        # halfmove clock
+            self.en_passant = Square.get_index(fen_parts[3])
+        # halfmove clock - 50 moves rule
         self.halfmove = fen_parts[4]
         # fullmove clock
         self.fullmove = fen_parts[5]
-        # bitboard for all pieces of a color
+        # bitboard for all pieces of one color
         for color in Color:
             for piece in Piece:
                 self.colors[color] |= self.pieces[color][piece]
