@@ -1,7 +1,7 @@
 import numpy as np
-from constants import Rank, File, Color
-from chessboard import Chessboard
-from square import Square
+from engine.constants import Rank, File, Color
+from engine.chessboard import Chessboard
+from engine.square import Square
 
 
 def compute_diag_mask(i):

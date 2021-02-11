@@ -1,11 +1,10 @@
 import numpy as np
-import lookup_tables as tb
-import helper as hp
-from chessboard import Chessboard
-from constants import Color, Piece, Rank
-from square import Square
-from move import Move
-import time
+import engine.lookup_tables as tb
+import engine.helper as hp
+from engine.chessboard import Chessboard
+from engine.constants import Color, Piece, Rank
+from engine.square import Square
+from engine.move import Move
 
 def get_pawn_attacks(i, color):
     # looks up pawn attack set in an attack table
@@ -109,12 +108,3 @@ def generate_moves(position):
                             movelist.append(attack)
                     pawn_attacks = hp.clear_bit(pawn_attacks, attacked_square.index)
     return movelist
-
-
-
-board = Chessboard()
-before = time.time()
-board.set_board('8/8/8/4p3/5P1P/1P6/8/8 w - e6 0 1')
-moves = generate_moves(board)
-for move in moves:
-    print(f'Move: {move} - capture: {move.captured_piece}')

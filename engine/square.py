@@ -1,5 +1,5 @@
 import numpy as np
-import helper as hp
+import engine.helper as hp
 
 class Square:
     def __init__(self, index):

@@ -1,4 +1,4 @@
-from square import Square
+from engine.square import Square
 
 class Move(object):
     def __init__(self, src, dest, piece=None, captured_piece=None, promo=None, ep=None, castle=False):

@@ -1,7 +1,7 @@
 import numpy as np
-import helper as hp
-from constants import Color, Rank, File, Piece, Castle
-from square import Square
+import engine.helper as hp
+from engine.constants import Color, Rank, File, Piece, Castle
+from engine.square import Square
 
 class Chessboard(object):
     def __init__(self):
