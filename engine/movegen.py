@@ -73,7 +73,10 @@ def generate_moves(position):
             if piece == Piece.PAWN:
                 pawn = Square(i).to_bitboard()
                 # single push moves
-                single_push = (pawn << np.uint8(8)) & ~position.occupancy
+                if position.turn == Color.WHITE:
+                    single_push = (pawn << np.uint8(8)) & ~position.occupancy
+                elif position.turn == Color.BLACK:
+                    single_push = (pawn >> np.uint8(8)) & ~position.occupancy
                 # single push available
                 if single_push != 0:
                     single = Move(i, hp.lsb(single_push), Piece.PAWN)
@@ -81,7 +84,10 @@ def generate_moves(position):
                     if Square(single.dest).to_bitboard() & tb.RANKS[7 - position.turn*7]:
                         single.promo = Piece.QUEEN
                     # we can double push only if 2 squares in front of the pawn are empty
-                    double_push = ((pawn & tb.RANKS[(position.turn * 5) + 1]) << np.uint8(16)) & ~position.occupancy
+                    if position.turn == Color.WHITE:
+                        double_push = ((pawn & tb.RANKS[(position.turn * 5) + 1]) << np.uint8(16)) & ~position.occupancy
+                    elif position.turn == Color.BLACK:
+                        double_push = ((pawn & tb.RANKS[(position.turn * 5) + 1]) >> np.uint8(16)) & ~position.occupancy
                     # there is a double push
                     if double_push != 0:
                         # en passant target is set to the pawn's single push (there must be a single push if double is available)
@@ -107,4 +113,16 @@ def generate_moves(position):
                             attack = Move(i, hp.lsb(pawn_attacks), Piece.PAWN, captured_piece=attacked_piece)
                             movelist.append(attack)
                     pawn_attacks = hp.clear_bit(pawn_attacks, attacked_square.index)
+                    
+            if piece == Piece.KNIGHT:
+                attacks = get_knight_attacks(i) & ~position.colors[position.turn]
+                while attacks:
+                    attacked_square = Square(hp.lsb(attacks))
+                    attacks = hp.clear_bit(attacks, attacked_square.index)
+                    move = Move(i, attacked_square.index, Piece.KNIGHT)
+                    for piece in Piece:
+                        if Square(move.dest).to_bitboard() & position.colors[position.turn ^ 1]:
+                            move.captured_piece = piece
+                    movelist.append(move)
+        
     return movelist

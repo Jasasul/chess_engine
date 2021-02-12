@@ -1,8 +1,9 @@
-function getFen(){
+function getFen(input_fen){
     $.ajax({
         url:'/handle_request',
         type: 'POST',
         dataType: 'json',
+        data: input_fen,
         success: function(data) {
             board.position(data.fen)
         }
@@ -48,7 +49,7 @@ function onDrop (source, target) {
 // for castling, en passant, pawn promotion
 function onSnapEnd () {
     board.position(game.fen())
-    getFen()
+    getFen(game.fen())
 }
 
 function updateStatus () {
