@@ -66,7 +66,6 @@ def generate_moves(position):
     movelist = []
     for piece in Piece:
         bb = position.pieces[position.turn][piece]
-        
         while bb:
             i = hp.lsb(bb)
             bb = hp.clear_bit(bb, i)

@@ -5,7 +5,14 @@ function getFen(input_fen){
         dataType: 'json',
         data: input_fen,
         success: function(data) {
-            board.position(data.fen)
+          squares = data.move.split(' ')
+          console.log(squares)
+          moveObj = {
+            from: squares[0],
+            to: squares[1]
+          }
+         game.move(moveObj)
+         board.position(game.fen())
         }
     })
 }
@@ -92,5 +99,6 @@ var config = {
   onDrop: onDrop,
   onSnapEnd: onSnapEnd
 }
-board = Chessboard('board', config);
+board = Chessboard('board', config)
+board.position(game.fen())
 

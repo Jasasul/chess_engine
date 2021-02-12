@@ -16,6 +16,8 @@ def handle_request():
     before = time.time()
     board = Chessboard()
     fen = request.get_data().decode()
+    board.set_board(fen)
     moves = generate_moves(board)
-    result_fen = 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2'
-    return jsonify(fen=result_fen)
+    move = rn.choice(moves)
+    move_string = str(move)
+    return jsonify(move=move_string)
