@@ -1,8 +1,7 @@
-class Test:
-    def __init__(self):
-        self.index = 1
-    
-    def __repr__(self):
-        return str(self.index)
+from engine.movegen import generate_moves
+from engine.chessboard import Chessboard
 
-test = Test()
+board = Chessboard()
+board.set_board(board.start_fen)
+moves = generate_moves(board)
+print(moves)

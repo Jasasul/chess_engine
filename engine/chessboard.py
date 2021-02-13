@@ -75,7 +75,7 @@ class Chessboard(object):
                 self.castle[self.castle_chars.index(char)] = 1
         # en passant target square if any
         if fen_parts[3] != '-':
-            self.en_passant = Square.get_index(fen_parts[3])
+            self.en_passant = Square(Square.get_index(fen_parts[3]))
         # halfmove clock - 50 moves rule
         self.halfmove = fen_parts[4]
         # fullmove clock

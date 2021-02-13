@@ -1,18 +1,23 @@
 function getFen(input_fen){
+  // sends FEN position to the flask server which generates moves
+  // returns a move generates by the engine in the string form(from + to squares)
     $.ajax({
         url:'/handle_request',
         type: 'POST',
         dataType: 'json',
         data: input_fen,
         success: function(data) {
+          // creating a move object (from, to)
           squares = data.move.split(' ')
-          console.log(squares)
+          $('.text').text(squares[0] + ' ' + squares[1])
+          // move obj
           moveObj = {
             from: squares[0],
             to: squares[1]
           }
-         game.move(moveObj)
-         board.position(game.fen())
+          // interpreting the move
+          game.move(moveObj)
+          board.position(game.fen())
         }
     })
 }

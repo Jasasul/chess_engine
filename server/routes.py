@@ -13,11 +13,13 @@ def home():
 
 @routes.route('/handle_request', methods=['POST'])
 def handle_request():
-    before = time.time()
+    # initial position
     board = Chessboard()
     fen = request.get_data().decode()
     board.set_board(fen)
+    # move generation
     moves = generate_moves(board)
     move = rn.choice(moves)
     move_string = str(move)
+    # sending move generated back to the GUI
     return jsonify(move=move_string)

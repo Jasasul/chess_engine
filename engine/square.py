@@ -4,6 +4,12 @@ import engine.helper as hp
 class Square:
     def __init__(self, index):
         self.index = np.uint8(index)
+    
+    def __repr__(self):
+        rank = self.index // 8
+        file = self.index % 8
+        string = chr(ord('a') + file) + str(rank + 1)
+        return string
 
     def get_char(self):
         rank = self.index // 8
