@@ -19,7 +19,7 @@ def get_king_attacks(i):
     return tb.KING_ATTACKS[i]
 
 def get_bishop_attacks(i, occ):
-    # calculates diagonal and antidiagonal moves
+    # calculates diagonal and antidiagonal attacks
     attacks = np.uint64(0)
 
     diag = tb.mask_diag_attacks(i, occ)
@@ -30,13 +30,14 @@ def get_bishop_attacks(i, occ):
     return attacks
 
 def get_rook_attacks(i, occ):
-    # calculates file and rank moves
+    # calculates file and rank attacks
     attacks = np.uint64(0)
 
     rank = tb.mask_rank_attacks(i, occ)
     file = tb.mask_file_attacks(i, occ)
 
     attacks |= rank | file
+    attacks ^= Square(i).to_bitboard()
     
     return attacks
 
@@ -77,7 +78,8 @@ def gen_single_push(position, src):
     
     if single_push:
         move = Move(src, single_push, Piece.PAWN)
-    return move
+        return move
+    return Move(None, None, None)
 
 def gen_double_push(position, src):
     # generates a double push from src square
@@ -90,8 +92,8 @@ def gen_double_push(position, src):
     
     if double_push:
         move = Move(src, double_push, Piece.PAWN)
-    
-    return move
+        return move
+    return Move(None, None, None)
 
 def gen_pawn_capture(position, src):
     # generates pawn captures from src square
@@ -122,7 +124,7 @@ def gen_pawn_moves(position, pawn):
     moves = []
     enp = None
     single = gen_single_push(position, pawn)
-    if single:
+    if single.is_valid():
         moves.append(single)
         if Square(single.dest).to_bitboard() & tb.RANKS[7 - position.turn*7]:
             single.promo = Piece.QUEEN
@@ -158,6 +160,46 @@ def gen_knight_moves(position, src):
         attacks = hp.clear_bit(attacks, hp.lsb(attack))
     return moves
 
+def gen_bishop_moves(position, src):
+    # generates all moves for a knigth
+    moves = []
+    attacks = get_bishop_attacks(hp.lsb(src), position.occupancy)
+    while attacks:
+        attack = Square(hp.lsb(attacks)).to_bitboard()
+        if not attack & position.colors[position.turn]:
+            move = Move(src, attack, Piece.BISHOP)
+            check_capture(position, move)
+            moves.append(move)
+        attacks = hp.clear_bit(attacks, hp.lsb(attack))
+    return moves
+
+def gen_rook_moves(position, src):
+    # generates all moves for a knigth
+    moves = []
+    attacks = get_rook_attacks(hp.lsb(src), position.occupancy)
+    while attacks:
+        attack = Square(hp.lsb(attacks)).to_bitboard()
+        if not attack & position.colors[position.turn]:
+            move = Move(src, attack, Piece.ROOK)
+            check_capture(position, move)
+            moves.append(move)
+        attacks = hp.clear_bit(attacks, hp.lsb(attack))
+    return moves
+
+def gen_queen_moves(position, src):
+    # generates all moves for a knigth
+    moves = []
+    attacks = get_queen_attacks(hp.lsb(src), position.occupancy)
+    hp.print_bitboard(attacks)
+    while attacks:
+        attack = Square(hp.lsb(attacks)).to_bitboard()
+        if not attack & position.colors[position.turn]:
+            move = Move(src, attack, Piece.QUEEN)
+            check_capture(position, move)
+            moves.append(move)
+        attacks = hp.clear_bit(attacks, hp.lsb(attack))
+    return moves
+
 def generate_moves(position):
     # generates moves for all pieces on all squares for a side to move
     moves = []
@@ -171,6 +213,12 @@ def generate_moves(position):
                 moveset = gen_pawn_moves(position, src.to_bitboard())
             if piece == Piece.KNIGHT:
                 moveset = gen_knight_moves(position, src.to_bitboard())
+            if piece == Piece.BISHOP:
+                moveset = gen_bishop_moves(position, src.to_bitboard())
+            if piece == Piece.ROOK:
+                moveset = gen_rook_moves(position, src.to_bitboard())
+            if piece == Piece.QUEEN:
+                moveset = gen_queen_moves(position, src.to_bitboard())
 
             for move in moveset:
                 if move.is_valid():

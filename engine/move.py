@@ -2,10 +2,14 @@ from engine.square import Square
 import engine.helper as hp
 
 class Move(object):
-    def __init__(self, src, dest, piece, captured=None, promo=None, ep=None, castle=False):
-        self.src = hp.lsb(src) # from (0-63)
-        self.dest = hp.lsb(dest) # to (0-63)
-        self.piece = piece # piece type (0-5)
+    def __init__(self, src=None, dest=None, piece=None, captured=None, promo=None, ep=None, castle=False):
+        self.src = src
+        if self.src != None:
+            self.src = hp.lsb(self.src)
+        self.dest = dest
+        if self.dest != None:
+            self.dest = hp.lsb(self.dest)
+        self.piece = piece
         self.promo = promo # promotion piece type (0-5)
         self.ep = ep # en passant target on the next turn (0-63)
         self.castle = castle # handle castling rights (True or False)
@@ -13,7 +17,7 @@ class Move(object):
     
     def is_valid(self):
         # a move has to have a source, a destination and a piece
-        if self.src and self.dest and self.piece in [0, 1, 2, 3, 4, 5]:
+        if self.src != None and self.dest != None and self.piece in [0, 1, 2, 3, 4, 5]:
             return True
         return False
     

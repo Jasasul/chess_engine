@@ -2,6 +2,7 @@ import numpy as np
 from engine.constants import Rank, File, Color
 from engine.chessboard import Chessboard
 from engine.square import Square
+import engine.helper as hp
 
 
 def compute_diag_mask(i):
@@ -26,19 +27,23 @@ def first_rank_attacks(sq, occ):
     # right ray
     for i in range(sq, 8):
         w |= np.uint64(1) << np.uint64(i)
+        if i == sq:
+            w ^= (np.uint64(1) << sq)
         # if the ray is blocked
         if w & occ:
             break
     # left ray
     for i in range(sq, -1, -1):
-        e |= np.uint64(1) << np.uint64(i)
         # if the ray is blocked
+        e |= np.uint64(1) << np.uint64(i)
+        if i == sq:
+            e ^= (np.uint64(1) << sq)
         if e & occ:
             break
     
     attacks |= w | e
     
-    return attacks ^ np.uint64(1) << sq
+    return attacks ^ (np.uint64(1) << sq)
 # constants required for calculations
 A_FILE = np.uint64(0x0101010101010101)
 FIRST_RANK = np.uint64(0x00000000000000FF)
@@ -207,11 +212,13 @@ def mask_antidiag_attacks(sq, occ):
     # mapping back to antidiagonal
     return (attacks * FILES[File.A]) & ANTIDIAG_MASKS[sq]
 
-FIRST_RANK_ATTACKS = np.zeros((8, 256), dtype=np.uint8)
-# first rank attacks table
-for file in range(8): # 8 squares for the first rank
-    for occ in range(256): # 256 posibilities - 2^8
-        FIRST_RANK_ATTACKS[file][occ] = first_rank_attacks(np.uint64(file), np.uint64(occ))
+FIRST_RANK_ATTACKS = np.fromiter(
+        (first_rank_attacks(np.uint64(i), np.uint64(occ))
+            for i in range(8) # 8 squares in a rank 
+            for occ in range(256)), # 2^8 = 256 possible occupancies of a rank
+        dtype=np.uint8,
+        count=8*256)
+FIRST_RANK_ATTACKS.shape = (8,256)
 
 PAWN_ATTACKS = np.zeros((2, 64), dtype=np.uint64)
 # pawn attacks table
