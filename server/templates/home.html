@@ -1,5 +1,32 @@
 {% extends 'base.html' %}
 {% block content %}
-    <h1 class="text">First heading text</h1>
-    <div id="board" style="width: 400px"></div>
+<div class="content">
+    <div class="position">
+        <div class="side_div">
+            <button class="btn fen-btn btn-side active-side">White</button>
+            <button class="btn fen-btn btn-side">Black</button>
+        </div>
+        <div class="side_div">
+            <button id="wk" class="btn fen-btn btn-castle active-side">WKingside</button>
+            <button id="bk" class="btn fen-btn btn-castle active-side">BKingside</button>
+        </div>
+        <div class="side_div">
+            <button id="wq" class="btn fen-btn btn-castle active-side">WQueenside</button>
+            <button id="bq" class="btn fen-btn btn-castle active-side">BQueenside</button>
+        </div>
+        <div class="side_div side_inp">
+            <label class="ep-label" for="enpassant">En passant</label><br>
+            <input id="ep-input" class="ep-input" type="text" name='enpassant'>
+        </div>
+    </div>
+    <div class="board_div">
+        <div id="board" style="width: 600px"></div>
+        <p class="fen-string"></p>
+    </div>
+    <div class="btns">
+        <button class="btn btn-start">Start Position</button>
+        <button class="btn btn-empty">Empty Board</button>
+        <button class="btn btn-move">Find Move</button>
+    </div>
 {% endblock content %}
+</div>

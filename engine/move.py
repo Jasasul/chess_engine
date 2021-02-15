@@ -2,18 +2,15 @@ from engine.square import Square
 import engine.helper as hp
 
 class Move(object):
-    def __init__(self, src=None, dest=None, piece=None, captured=None, promo=None, ep=None, castle=False):
-        self.src = src
-        if self.src != None:
-            self.src = hp.lsb(self.src)
-        self.dest = dest
-        if self.dest != None:
-            self.dest = hp.lsb(self.dest)
-        self.piece = piece
-        self.promo = promo # promotion piece type (0-5)
+    def __init__(self, src=None, dest=None, piece=None,
+                 captured=None, promo=None, ep=None, castle=False):
+        self.src = src # source square bb
+        self.dest = dest # destination square bb
+        self.piece = piece # piece (0-5)
+        self.promo = promo # promotion piece (0-5)
         self.ep = ep # en passant target on the next turn (0-63)
         self.castle = castle # handle castling rights (True or False)
-        self.captured_piece = captured 
+        self.captured = captured 
     
     def is_valid(self):
         # a move has to have a source, a destination and a piece
@@ -21,6 +18,13 @@ class Move(object):
             return True
         return False
     
+    def print_self(self):
+        bb = Square(self.src).to_bitboard()
+        bb |= Square(self.dest).to_bitboard()
+        hp.print_bitboard(bb)
+    
     def __repr__(self):
         # human readable format of a move
-        return f'{Square(self.src).get_char()} {Square(self.dest).get_char()}'
+        source = Square(hp.lsb(self.src)).get_char()
+        destination = Square(hp.lsb(self.dest)).get_char()
+        return f'{source} {destination}'

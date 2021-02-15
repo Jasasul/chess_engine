@@ -50,7 +50,48 @@ def get_queen_attacks(i, occ):
 
     attacks |= rook | bishop
 
-    return attacks
+    return attack
+
+def gen_single_push(position, src):
+    # creates a single pudh move if available
+    move = Move()
+    if position.turn == Color.WHITE:
+        single_push = src << np.uint64(8)
+    elif position.turn == Color.BLACK:
+        single_push = src >> np.iunt64(8)
+    
+    if single_push & ~position.occupancy:
+        move.src = src
+        move.dest = single_push
+        move.piece = Piece.PAWN
+    
+    return move
+
+def gen_double_push(position, src):
+    # creates a double push move if available
+    move = Move()
+    if position.turn == Color.WHITE:
+        double_push = src << np.uint64(16)
+    elif position.turn == Color.BLACK:
+        double_push = src >> np.iunt64(16)
+    
+    if double_push & ~position.occupancy:
+        move.src = src
+        move.dest = double_push
+        move.piece = Piece.PAWN
+    
+    return move
+
+def gen_pawn_moves(position, src):
+    # generates all pawn moves
+    moves = []
+    single = gen_single_push(position, src)
+    if single.is_valid():
+        moves.append(single)
+        double = gen_double_push(position, src)
+        moves.append(double)
+    
+    return moves
 
 def is_attacked(position, i, color):
     # returns if a square is attacked by a color given
@@ -69,137 +110,6 @@ def is_attacked(position, i, color):
 
     return False
 
-def gen_single_push(position, src):
-    # generates a single push for a src square
-    if position.turn == Color.WHITE:
-        single_push = (src << np.uint8(8)) & ~position.occupancy
-    elif position.turn == Color.BLACK:
-        single_push = (src >> np.uint8(8)) & ~position.occupancy
-    
-    if single_push:
-        move = Move(src, single_push, Piece.PAWN)
-        return move
-    return Move(None, None, None)
-
-def gen_double_push(position, src):
-    # generates a double push from src square
-    # original - 1st for W, 7th for B
-    on_original_rank = src & tb.RANKS[(position.turn*5) + 1] 
-    if position.turn == Color.WHITE:
-        double_push = on_original_rank << np.uint8(16) & ~position.occupancy
-    elif position.turn == Color.BLACK:
-        double_push = on_original_rank >> np.uint8(16) & ~position.occupancy
-    
-    if double_push:
-        move = Move(src, double_push, Piece.PAWN)
-        return move
-    return Move(None, None, None)
-
-def gen_pawn_capture(position, src):
-    # generates pawn captures from src square
-    captures = []
-    pawn_attacks = get_pawn_attacks(hp.lsb(src), position.turn)
-    while pawn_attacks:
-        dest = Square(hp.lsb(pawn_attacks))
-        for piece in Piece:
-            if dest.to_bitboard() & position.pieces[position.turn ^ 1][piece]:
-                move = Move(src,
-                            dest.to_bitboard(),
-                            Piece.PAWN,
-                            captured=piece)
-                captures.append(move)
-        pawn_attacks = hp.clear_bit(pawn_attacks, dest.index)
-    
-    return captures
-
-def check_en_passant(position, src):
-    # creates an en passant move if available
-    pawn_attacks = get_pawn_attacks(hp.lsb(src), position.turn)
-    en_passant = pawn_attacks & position.en_passant.to_bitboard()
-    move = Move(src, en_passant, Piece.PAWN)
-    return move
-
-def gen_pawn_moves(position, pawn):
-    # generates all pawn moves for the side to move
-    moves = []
-    enp = None
-    single = gen_single_push(position, pawn)
-    if single.is_valid():
-        moves.append(single)
-        if Square(single.dest).to_bitboard() & tb.RANKS[7 - position.turn*7]:
-            single.promo = Piece.QUEEN
-        double = gen_double_push(position, pawn)
-        if double:
-            double.ep = single.dest # if double push, setting en passant for the next move
-            moves.append(double)
-    captures = gen_pawn_capture(position, pawn)
-    for capture in captures:
-        moves.append(capture)
-    if position.en_passant: 
-        enp = check_en_passant(position, pawn)
-        moves.append(enp)
-
-    return moves
-
-def check_capture(position, move):
-    # checks if a piece move destination is a capture
-    for piece in Piece:
-        if Square(move.dest).to_bitboard() & position.pieces[position.turn ^ 1][piece]:
-            move.captured = piece
-
-def gen_knight_moves(position, src):
-    # generates all moves for a knigth
-    moves = []
-    attacks = get_knight_attacks(hp.lsb(src))
-    while attacks:
-        attack = Square(hp.lsb(attacks)).to_bitboard()
-        if not attack & position.colors[position.turn]:
-            move = Move(src, attack, Piece.KNIGHT)
-            check_capture(position, move)
-            moves.append(move)
-        attacks = hp.clear_bit(attacks, hp.lsb(attack))
-    return moves
-
-def gen_bishop_moves(position, src):
-    # generates all moves for a knigth
-    moves = []
-    attacks = get_bishop_attacks(hp.lsb(src), position.occupancy)
-    while attacks:
-        attack = Square(hp.lsb(attacks)).to_bitboard()
-        if not attack & position.colors[position.turn]:
-            move = Move(src, attack, Piece.BISHOP)
-            check_capture(position, move)
-            moves.append(move)
-        attacks = hp.clear_bit(attacks, hp.lsb(attack))
-    return moves
-
-def gen_rook_moves(position, src):
-    # generates all moves for a knigth
-    moves = []
-    attacks = get_rook_attacks(hp.lsb(src), position.occupancy)
-    while attacks:
-        attack = Square(hp.lsb(attacks)).to_bitboard()
-        if not attack & position.colors[position.turn]:
-            move = Move(src, attack, Piece.ROOK)
-            check_capture(position, move)
-            moves.append(move)
-        attacks = hp.clear_bit(attacks, hp.lsb(attack))
-    return moves
-
-def gen_queen_moves(position, src):
-    # generates all moves for a knigth
-    moves = []
-    attacks = get_queen_attacks(hp.lsb(src), position.occupancy)
-    hp.print_bitboard(attacks)
-    while attacks:
-        attack = Square(hp.lsb(attacks)).to_bitboard()
-        if not attack & position.colors[position.turn]:
-            move = Move(src, attack, Piece.QUEEN)
-            check_capture(position, move)
-            moves.append(move)
-        attacks = hp.clear_bit(attacks, hp.lsb(attack))
-    return moves
-
 def generate_moves(position):
     # generates moves for all pieces on all squares for a side to move
     moves = []
@@ -207,23 +117,15 @@ def generate_moves(position):
         piece_bb = position.pieces[position.turn][piece]
         while piece_bb:
             moveset = []
-            src = Square(hp.lsb(piece_bb))
+            src = Square(hp.lsb(piece_bb)).to_bitboard()
 
             if piece == Piece.PAWN:
-                moveset = gen_pawn_moves(position, src.to_bitboard())
-            if piece == Piece.KNIGHT:
-                moveset = gen_knight_moves(position, src.to_bitboard())
-            if piece == Piece.BISHOP:
-                moveset = gen_bishop_moves(position, src.to_bitboard())
-            if piece == Piece.ROOK:
-                moveset = gen_rook_moves(position, src.to_bitboard())
-            if piece == Piece.QUEEN:
-                moveset = gen_queen_moves(position, src.to_bitboard())
+                moveset = gen_pawn_moves(position, src)
 
             for move in moveset:
                 if move.is_valid():
                     moves.append(move)
 
-            piece_bb = hp.clear_bit(piece_bb, src.index)
+            piece_bb = hp.clear_bit(piece_bb, hp.lsb(src))
     
     return moves

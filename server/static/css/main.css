@@ -1,0 +1,77 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-inherit;
+}
+
+html {
+  font-size: 10px;
+}
+
+body {
+  box-sizing: border-box;
+}
+
+.btn {
+  width: 15rem;
+  height: 4rem;
+  margin-top: 3rem;
+  margin-left: 2rem;
+}
+
+.btn {
+  margin-right: 2rem;
+}
+
+.active-side {
+  border: 2px solid black;
+}
+
+.ep-label {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+}
+
+.ep-input {
+  width: 5rem;
+  height: 5rem;
+  font-size: 3rem;
+  text-align: center;
+  border: 2px solid black;
+}
+
+.fen-string {
+  position: absolute;
+  font-size: 2.5rem;
+  margin-top: 3rem;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  top: 90vh;
+  left: 55vw;
+}
+
+.content {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
+}
+
+.btns {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.side_inp {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 2rem;
+}
+/*# sourceMappingURL=main.css.map */

@@ -16,6 +16,7 @@ class Chessboard(object):
         self.halfmove = np.uint64(0)
         self.fullmove = np.uint64(0)
         self.start_fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+        self.move_list = []
 
     def reset(self):
         # resets all properties of the position obj
@@ -103,4 +104,6 @@ class Chessboard(object):
         self.set_special(fen_parts[2], fen_parts[3])
         self.set_move_clock(fen_parts[4], fen_parts[5])
         self.bb_adjust()
-        
+    
+    def make_move(self, move):
+        move.print_self()
