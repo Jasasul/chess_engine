@@ -11,8 +11,29 @@ function generateMove(input_fen){
         type: 'POST',
         dataType: 'json',
         data: input_fen,
-        success: 'hello world'
+        success: function(data) {
+          let move = data.move
+          hightlightMove(move)
+        }
     })
+}
+
+
+function hightlightMove(move) {
+  // highlights from a to square of the move
+  let squares = move.split(' ')
+  let from = $('#board .square-' + squares[0])
+  let to = $('#board .square-' + squares[1])
+  squares[0] = from
+  squares[1] = to
+  squares.forEach(square => {
+    if (square.hasClass('white-1e1d7')) {
+      square.addClass('white-highlight')
+    } else {
+      square.addClass('black-highlight')
+    }
+    console.log(square);
+  });
 }
 
 function squareIsVaild(square) {
@@ -68,6 +89,7 @@ function buildFen() {
 }
 
 function displayFen(fen) {
+  // shows up a fen on screen
   $('.fen-string').text(fen)
 }
 
@@ -90,6 +112,7 @@ $('.btn-move').click(function() {
   let fen = $('.fen-string').text()
   let first_part = fen.split(' ')[0]
   for (let i = 0; i < first_part.length; i++) {
+    console.log(first_part[i][0])
     if (first_part[i] in chars | first_part[i].toLowerCase() in chars) {
       is_valid = true
     }
@@ -99,8 +122,6 @@ $('.btn-move').click(function() {
   } else {
     alert('empty board')
   }
-
-  
 })
 
 $('.btn-side').click(function() {
@@ -119,18 +140,15 @@ $('.btn-castle').click(function() {
 })
 
 $('.fen-btn').click(function() {
+  // optins changes -> we might need a new fen
   buildFen()
 })
 
 $('.ep-input').keyup(function() {
-  // sets en passant target
+  // sets en passant target if the square is valid
   buildFen()
 })
 
-function hightlightMove(data) {
-  move = data.move.split(' ')
-  console.log(move);
-}
 
 function onSnapEnd() {
   displayFen(buildFen())

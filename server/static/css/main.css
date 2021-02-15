@@ -50,6 +50,14 @@ body {
   left: 55vw;
 }
 
+.white-highlight {
+  background-color: #a9a9a9;
+}
+
+.black-highlight {
+  background-color: #696969;
+}
+
 .content {
   position: relative;
   display: flex;
