@@ -36,6 +36,11 @@ function hightlightMove(move) {
   });
 }
 
+$(window).click(function() {
+  $('.white-highlight').removeClass('white-highlight')
+  $('.black-highlight').removeClass('black-highlight')
+})
+
 function squareIsVaild(square) {
   let is_valid = true
   if (square.length != 2) {
