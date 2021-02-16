@@ -50,7 +50,7 @@ def get_queen_attacks(i, occ):
 
     attacks |= rook | bishop
 
-    return attack
+    return attacks
 
 def gen_single_push(position, src):
     # creates a single pudh move if available
@@ -93,6 +93,63 @@ def gen_pawn_moves(position, src):
     
     return moves
 
+def gen_knight_moves(position, src):
+    moves = []
+    attacks = get_knight_attacks(hp.lsb(src))
+    while attacks:
+        attack = Square(hp.lsb(attacks)).to_bitboard()
+        if attack & ~position.colors[position.turn]:
+            move = Move(src, attack, Piece.KNIGHT)
+            check_capture(position, move)
+            moves.append(move)
+        attacks = hp.clear_bit(attacks, hp.lsb(attack))
+    
+    return moves
+
+def gen_bishop_moves(position, src):
+    moves = []
+    attacks = get_bishop_attacks(hp.lsb(src), position.occupancy)
+    while attacks:
+        attack = Square(hp.lsb(attacks)).to_bitboard()
+        if attack & ~position.colors[position.turn]:
+            move = Move(src, attack, Piece.BISHOP)
+            check_capture(position, move)
+            moves.append(move)
+        attacks = hp.clear_bit(attacks, hp.lsb(attacks))
+    
+    return moves
+
+def gen_rook_moves(position, src):
+    moves = []
+    attacks = get_rook_attacks(hp.lsb(src), position.occupancy)
+    while attacks:
+        attack = Square(hp.lsb(attacks)).to_bitboard()
+        if attack & ~position.colors[position.turn]:
+            move = Move(src, attack, Piece.ROOK)
+            check_capture(position, move)
+            moves.append(move)
+        attacks = hp.clear_bit(attacks, hp.lsb(attacks))
+    
+    return moves
+
+def gen_queen_moves(position, src):
+    moves = []
+    attacks = get_queen_attacks(hp.lsb(src), position.occupancy)
+    while attacks:
+        attack = Square(hp.lsb(attacks)).to_bitboard()
+        if attack & ~position.colors[position.turn]:
+            move = Move(src, attack, Piece.QUEEN)
+            check_capture(position, move)
+            moves.append(move)
+        attacks = hp.clear_bit(attacks, hp.lsb(attacks))
+    
+    return moves
+
+def check_capture(position, move):
+   for piece in Piece:
+       if move.dest & position.pieces[position.turn ^ 1][piece]:
+           move.captured = piece
+
 def is_attacked(position, i, color):
     # returns if a square is attacked by a color given
     if get_pawn_attacks(i, color) & position.pieces[color ^ 1][Piece.PAWN]:
@@ -121,6 +178,14 @@ def generate_moves(position):
 
             if piece == Piece.PAWN:
                 moveset = gen_pawn_moves(position, src)
+            if piece == Piece.KNIGHT:
+                moveset = gen_knight_moves(position, src)
+            if piece == Piece.BISHOP:
+                moveset = gen_bishop_moves(position, src)
+            if piece == Piece.ROOK:
+                moveset = gen_rook_moves(position, src) 
+            if piece == Piece.QUEEN:
+                moveset = gen_queen_moves(position, src)
 
             for move in moveset:
                 if move.is_valid():
