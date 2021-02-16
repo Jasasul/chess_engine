@@ -77,7 +77,7 @@ class Chessboard(object):
                 self.castle[self.castle_chars.index(char)] = 1
         # en passant target square if any
         if ep_fen != '-':
-            self.en_passant = Square(Square.get_index(ep_fen))
+            self.en_passant = Square(Square.get_index(ep_fen)).to_bitboard()
     
     def set_move_clock(self, half_fen, full_fen):
         # sets halfmove and fullmove clock
@@ -105,11 +105,27 @@ class Chessboard(object):
         self.set_move_clock(fen_parts[4], fen_parts[5])
         self.bb_adjust()
     
+    def set_en_passant(self, move):
+        if move.piece == Piece.PAWN:
+            if self.turn == Color.WHITE:
+                double = move.dest & (move.src << np.uint(16))
+                if double:
+                    self.en_passant = move.src << np.uint(8)
+            if self.turn == Color.BLACK:
+                double = move.dest & (move.src >> np.uint(16))
+                if double:
+                    self.en_passant = move.src >> np.uint(8)
+            
     def make_move(self, move):
         # makes a move on internal chessboard
         self.pieces[self.turn][move.piece] ^= move.src | move.dest
         if move.captured != None:
             self.pieces[self.turn ^ 1][move.captured] ^= move.dest
         self.bb_adjust()
+        self.set_en_passant(move)
+        self.halfmove += 1
+        if move.piece == Piece.PAWN or move.captured != None:
+            halfmove = 0
+        if self.turn == Color.BLACK:
+            self.fullmove += 1
         self.turn ^= 1
-        hp.print_bitboard(self.pieces[self.turn][move.captured])

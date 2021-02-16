@@ -58,7 +58,7 @@ def gen_single_push(position, src):
     if position.turn == Color.WHITE:
         single_push = src << np.uint64(8)
     elif position.turn == Color.BLACK:
-        single_push = src >> np.iunt64(8)
+        single_push = src >> np.uint64(8)
     
     if single_push & ~position.occupancy:
         move.src = src
@@ -73,7 +73,10 @@ def gen_double_push(position, src):
     if position.turn == Color.WHITE:
         double_push = src << np.uint64(16)
     elif position.turn == Color.BLACK:
-        double_push = src >> np.iunt64(16)
+        double_push = src >> np.uint64(16)
+    
+    if not src & tb.RANKS[(position.turn*5) + 1]:
+        double_push = np.uint64(0)
     
     if double_push & ~position.occupancy:
         move.src = src
@@ -90,10 +93,28 @@ def gen_pawn_moves(position, src):
         moves.append(single)
         double = gen_double_push(position, src)
         moves.append(double)
+        special = gen_en_passant(position)
+        moves += special
+    return moves
+
+def gen_en_passant(position):
+    # if there is an en passant target generate ep moves
+    moves = []
+    if position.en_passant != None:
+        possible_squares = get_pawn_attacks(
+            hp.lsb(position.en_passant),
+            position.turn ^ 1)
+        attacks = possible_squares & position.pieces[position.turn][Piece.PAWN]
+        while attacks:
+            attack = Square(hp.lsb(attacks)).to_bitboard()
+            move = Move(attack, position.en_passant, Piece.PAWN, ep=True)
+            moves.append(move)
+            attacks = hp.clear_bit(attacks, hp.lsb(attack))
     
     return moves
 
 def gen_knight_moves(position, src):
+    # generates all knight moves
     moves = []
     attacks = get_knight_attacks(hp.lsb(src))
     while attacks:
@@ -107,6 +128,7 @@ def gen_knight_moves(position, src):
     return moves
 
 def gen_bishop_moves(position, src):
+    # generates all bishop moves
     moves = []
     attacks = get_bishop_attacks(hp.lsb(src), position.occupancy)
     while attacks:
@@ -120,6 +142,7 @@ def gen_bishop_moves(position, src):
     return moves
 
 def gen_rook_moves(position, src):
+    # generates all rook moves
     moves = []
     attacks = get_rook_attacks(hp.lsb(src), position.occupancy)
     while attacks:
@@ -133,6 +156,7 @@ def gen_rook_moves(position, src):
     return moves
 
 def gen_queen_moves(position, src):
+    # generates all queen moves
     moves = []
     attacks = get_queen_attacks(hp.lsb(src), position.occupancy)
     while attacks:
@@ -146,6 +170,7 @@ def gen_queen_moves(position, src):
     return moves
 
 def check_capture(position, move):
+    # checks if a move is a capture
    for piece in Piece:
        if move.dest & position.pieces[position.turn ^ 1][piece]:
            move.captured = piece

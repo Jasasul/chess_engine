@@ -3,12 +3,12 @@ import engine.helper as hp
 
 class Move(object):
     def __init__(self, src=None, dest=None, piece=None,
-                 captured=None, promo=None, ep=None, castle=False):
+                 captured=None, promo=None, ep=False, castle=False):
         self.src = src # source square bb
         self.dest = dest # destination square bb
         self.piece = piece # piece (0-5)
         self.promo = promo # promotion piece (0-5)
-        self.ep = ep # en passant target on the next turn (0-63)
+        self.ep = ep # is en passant
         self.castle = castle # handle castling rights (True or False)
         self.captured = captured 
     
@@ -19,6 +19,7 @@ class Move(object):
         return False
     
     def print_self(self):
+        # prints move as a bitboard
         bb = Square(self.src).to_bitboard()
         bb |= Square(self.dest).to_bitboard()
         hp.print_bitboard(bb)
