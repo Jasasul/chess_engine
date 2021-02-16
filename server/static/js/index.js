@@ -22,6 +22,7 @@ function generateMove(input_fen){
 function hightlightMove(move) {
   // highlights from a to square of the move
   let squares = move.split(' ')
+  console.log(squares);
   let from = $('#board .square-' + squares[0])
   let to = $('#board .square-' + squares[1])
   squares[0] = from
@@ -117,7 +118,6 @@ $('.btn-move').click(function() {
   let fen = $('.fen-string').text()
   let first_part = fen.split(' ')[0]
   for (let i = 0; i < first_part.length; i++) {
-    console.log(first_part[i][0])
     if (first_part[i] in chars | first_part[i].toLowerCase() in chars) {
       is_valid = true
     }

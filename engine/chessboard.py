@@ -106,4 +106,10 @@ class Chessboard(object):
         self.bb_adjust()
     
     def make_move(self, move):
-        move.print_self()
+        # makes a move on internal chessboard
+        self.pieces[self.turn][move.piece] ^= move.src | move.dest
+        if move.captured != None:
+            self.pieces[self.turn ^ 1][move.captured] ^= move.dest
+        self.bb_adjust()
+        self.turn ^= 1
+        hp.print_bitboard(self.pieces[self.turn][move.captured])

@@ -20,6 +20,7 @@ def handle_request():
     # move generation
     moves = generate_moves(board)
     move = rn.choice(moves)
+    board.make_move(move)
     move_string = str(move)
     # sending move generated back to the GUI
     return jsonify(move=move_string)
