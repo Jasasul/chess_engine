@@ -11,7 +11,7 @@ class Chessboard(object):
         self.colors = np.zeros(2, dtype=np.uint64)
         self.occupancy = np.uint64(0)
         self.turn = np.uint64(0)
-        self.castle = np.zeros(4, dtype=np.uint64)
+        self.castle = np.zeros((2, 2), dtype=np.uint64)
         self.en_passant = None
         self.halfmove = np.uint64(0)
         self.fullmove = np.uint64(0)
@@ -24,7 +24,7 @@ class Chessboard(object):
         self.colors = np.zeros(2, dtype=np.uint64)
         self.occupancy = np.uint64(0)
         self.turn = np.uint64(0)
-        self.castle = np.zeros(4, dtype=np.uint64)
+        self.castle = np.zeros((2, 2), dtype=np.uint64)
         self.enpassant = False
         self.halfmove = np.uint64(0)
         self.fullmove = np.uint64(0)
@@ -73,16 +73,22 @@ class Chessboard(object):
         # castling availability: K-king side white, Q-queen side white
         #                        k-king side black, q-queen side black
         for char in castle_fen:
-            if char in self.castle_chars:
-                self.castle[self.castle_chars.index(char)] = 1
+            if char == 'K':
+                self.castle[Color.WHITE][Castle.OO] = 1
+            if char == 'Q':
+                self.castle[Color.WHITE][Castle.OOO] = 1
+            if char == 'k':
+                self.castle[Color.BLACK][Castle.OO] = 1
+            if char == 'q':
+                self.castle[Color.BLACK][Castle.OOO] = 1
         # en passant target square if any
         if ep_fen != '-':
             self.en_passant = Square(Square.get_index(ep_fen)).to_bitboard()
     
     def set_move_clock(self, half_fen, full_fen):
         # sets halfmove and fullmove clock
-        self.halfmove = half_fen
-        self.fullmove = full_fen
+        self.halfmove = int(half_fen)
+        self.fullmove = int(full_fen)
     
     def bb_adjust(self):
         # sets up helper bitboards from piece bb
@@ -106,6 +112,7 @@ class Chessboard(object):
         self.bb_adjust()
     
     def set_en_passant(self, move):
+        # if the move is double push, sets single push as en passant target square
         if move.piece == Piece.PAWN:
             if self.turn == Color.WHITE:
                 double = move.dest & (move.src << np.uint(16))

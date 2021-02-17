@@ -2,7 +2,7 @@ import numpy as np
 import engine.lookup_tables as tb
 import engine.helper as hp
 from engine.chessboard import Chessboard
-from engine.constants import Color, Piece, Rank
+from engine.constants import Color, Piece, Rank, Castle
 from engine.square import Square
 from engine.move import Move
 
@@ -169,6 +169,42 @@ def gen_queen_moves(position, src):
     
     return moves
 
+def check_castle(position):
+    # generates all castle moves available (kingside, queenside)
+    king = position.pieces[position.turn][Piece.KING]
+    moves = []
+    king_side = Move()
+    queen_side = Move()
+    # squares are empty
+    f_square = king << np.uint8(1) & ~position.occupancy
+    g_square = king << np.uint8(2) & ~position.occupancy
+    d_square = king >> np.uint8(1) & ~position.occupancy
+    c_square = king >> np.uint8(2) & ~position.occupancy
+    b_square = king >> np.uint8(3) & ~position.occupancy
+    # squares are not under attack
+    f_attacked = is_attacked(position, hp.lsb(f_square), position.turn ^ 1)
+    g_attacked = is_attacked(position, hp.lsb(g_square), position.turn ^ 1)
+    d_attacked = is_attacked(position, hp.lsb(d_square), position.turn ^ 1)
+    c_attacked = is_attacked(position, hp.lsb(c_square), position.turn ^ 1)
+    b_attacked = is_attacked(position, hp.lsb(b_square), position.turn ^ 1)
+    if position.castle[position.turn][Castle.OO]:
+        if f_square and g_square:
+            if not(f_attacked or g_attacked):
+                king_side.src = king
+                king_side.dest = g_square
+                king_side.piece = Piece.KING
+                king_side.castle = Castle.OO
+                moves.append(king_side)
+    if position.castle[position.turn][Castle.OOO]:
+        if d_square and c_square and b_square:
+            if not(d_attacked or c_attacked or b_attacked):
+                queen_side.src = king
+                queen_side.dest = b_square
+                queen_side.piece = Piece.KING
+                queen_side.castle = Castle.OOO
+                moves.append(queen_side)
+    return moves
+
 def check_capture(position, move):
     # checks if a move is a capture
    for piece in Piece:
@@ -183,11 +219,11 @@ def is_attacked(position, i, color):
         return True
     if get_king_attacks(i) & position.pieces[color][Piece.KING]:
         return True
-    if get_bishop_attacks(i, board.occupancy) & position.pieces[color][Piece.BISHOP]:
+    if get_bishop_attacks(i, position.occupancy) & position.pieces[color][Piece.BISHOP]:
         return True
-    if get_rook_attacks(i, board.occupancy) & position.pieces[color][Piece.ROOK]:
+    if get_rook_attacks(i, position.occupancy) & position.pieces[color][Piece.ROOK]:
         return True
-    if get_queen_attacks(i, board.occupancy) & position.pieces[color][Piece.QUEEN]:
+    if get_queen_attacks(i, position.occupancy) & position.pieces[color][Piece.QUEEN]:
         return True
 
     return False
@@ -195,6 +231,7 @@ def is_attacked(position, i, color):
 def generate_moves(position):
     # generates moves for all pieces on all squares for a side to move
     moves = []
+    check_castle(position)
     for piece in Piece:
         piece_bb = position.pieces[position.turn][piece]
         while piece_bb:
@@ -218,4 +255,9 @@ def generate_moves(position):
 
             piece_bb = hp.clear_bit(piece_bb, hp.lsb(src))
     
+    castling = check_castle(position)
+    for move in castling:
+        if move.is_valid():
+            moves.append(move)
+
     return moves

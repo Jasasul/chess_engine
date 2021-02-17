@@ -30,8 +30,6 @@ class Piece(IntEnum):
 class Castle(IntEnum):
     OO = 0
     OOO = 1
-    oo = 2
-    ooo = 3
 
 class Rank(IntEnum):
     ONE = 0
