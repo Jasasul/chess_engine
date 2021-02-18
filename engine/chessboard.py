@@ -1,7 +1,9 @@
 import numpy as np
 import engine.helper as hp
+import engine.lookup_tables as tb
 from engine.constants import Color, Rank, File, Piece, Castle
 from engine.square import Square
+
 
 class Chessboard(object):
     def __init__(self):
@@ -122,7 +124,45 @@ class Chessboard(object):
                 double = move.dest & (move.src >> np.uint(16))
                 if double:
                     self.en_passant = move.src >> np.uint(8)
-            
+    
+    def set_castle(self, move):
+        # if a king or a rook moves form their original square
+        # that side castle right is lost
+        a1 = Square(0).to_bitboard()
+        h1 = Square(7).to_bitboard()
+        a8 = Square(56).to_bitboard()
+        h8 = Square(63).to_bitboard()
+
+        if move.piece == Piece.ROOK:
+            # if a rook moves from its original position
+            # that side castle is disabled
+            if (move.src & a1) or (move.src & a8):
+                self.castle[self.turn][Castle.OOO] = 0
+            if (move.src & h1) or (move.src & h8):
+                self.castle[self.turn][Castle.OO] = 0
+        
+        if move.piece == Piece.KING:
+            # if a king moves from its original square
+            # then the side looses all castling rights
+            self.castle[self.turn][Castle.OO] = 0
+            self.castle[self.turn][Castle.OOO] = 0
+    
+    def make_castle(self, move):
+        # if a move is a castle, move a rook accodringly
+        a_rook = self.pieces[self.turn][Piece.ROOK] & tb.FILES[File.A]
+        h_rook = self.pieces[self.turn][Piece.ROOK] & tb.FILES[File.H]
+        # kingside castle - rook on H file is moved
+        if move.castle == Castle.OO:
+            castled = h_rook >> np.uint8(2) 
+            self.pieces[self.turn][Piece.ROOK] ^= h_rook
+            self.pieces[self.turn][Piece.ROOK] ^= castled
+        # queenside caslte - rook on A file is moved1
+        if move.castle == Castle.OOO:
+            castled = a_rook << np.uint8(3) 
+            self.pieces[self.turn][Piece.ROOK] ^= a_rook
+            self.pieces[self.turn][Piece.ROOK] ^= castled
+
+
     def make_move(self, move):
         # makes a move on internal chessboard
         self.pieces[self.turn][move.piece] ^= move.src | move.dest
@@ -130,9 +170,17 @@ class Chessboard(object):
             self.pieces[self.turn ^ 1][move.captured] ^= move.dest
         self.bb_adjust()
         self.set_en_passant(move)
+        if move.piece == Piece.KING or move.piece == Piece.ROOK:
+            self.set_castle(move)
+        if move.castle != None:
+            self.make_castle(move)
+            hp.print_bitboard(self.pieces[self.turn][Piece.ROOK])
+        # the 50 move rule - if a moveblack or white is not a capture
+        # or a pawn move for 50 turns the game is considered draw
         self.halfmove += 1
         if move.piece == Piece.PAWN or move.captured != None:
             halfmove = 0
+        # a full move consist of white and black move
         if self.turn == Color.BLACK:
             self.fullmove += 1
         self.turn ^= 1

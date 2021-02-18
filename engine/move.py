@@ -3,7 +3,7 @@ import engine.helper as hp
 
 class Move(object):
     def __init__(self, src=None, dest=None, piece=None,
-                 captured=None, promo=None, ep=False, castle=False):
+                 captured=None, promo=None, ep=False, castle=None):
         self.src = src # source square bb
         self.dest = dest # destination square bb
         self.piece = piece # piece (0-5)

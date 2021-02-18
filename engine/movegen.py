@@ -176,19 +176,26 @@ def check_castle(position):
     king_side = Move()
     queen_side = Move()
     # squares are empty
-    f_square = king << np.uint8(1) & ~position.occupancy
-    g_square = king << np.uint8(2) & ~position.occupancy
-    d_square = king >> np.uint8(1) & ~position.occupancy
-    c_square = king >> np.uint8(2) & ~position.occupancy
-    b_square = king >> np.uint8(3) & ~position.occupancy
+    f_square = king << np.uint8(1)
+    g_square = king << np.uint8(2)
+    d_square = king >> np.uint8(1)
+    c_square = king >> np.uint8(2)
+    b_square = king >> np.uint8(3)
+
+    f_empty = f_square & ~position.occupancy
+    g_empty = g_square & ~position.occupancy
+    d_empty = d_square & ~position.occupancy
+    c_empty = c_square & ~position.occupancy
+    b_empty = b_square & ~position.occupancy
     # squares are not under attack
     f_attacked = is_attacked(position, hp.lsb(f_square), position.turn ^ 1)
     g_attacked = is_attacked(position, hp.lsb(g_square), position.turn ^ 1)
     d_attacked = is_attacked(position, hp.lsb(d_square), position.turn ^ 1)
     c_attacked = is_attacked(position, hp.lsb(c_square), position.turn ^ 1)
     b_attacked = is_attacked(position, hp.lsb(b_square), position.turn ^ 1)
+    # kingside and queenside castle
     if position.castle[position.turn][Castle.OO]:
-        if f_square and g_square:
+        if f_empty and g_empty:
             if not(f_attacked or g_attacked):
                 king_side.src = king
                 king_side.dest = g_square
@@ -196,10 +203,10 @@ def check_castle(position):
                 king_side.castle = Castle.OO
                 moves.append(king_side)
     if position.castle[position.turn][Castle.OOO]:
-        if d_square and c_square and b_square:
+        if d_empty and c_empty and b_empty:
             if not(d_attacked or c_attacked or b_attacked):
                 queen_side.src = king
-                queen_side.dest = b_square
+                queen_side.dest = c_square
                 queen_side.piece = Piece.KING
                 queen_side.castle = Castle.OOO
                 moves.append(queen_side)
@@ -231,7 +238,6 @@ def is_attacked(position, i, color):
 def generate_moves(position):
     # generates moves for all pieces on all squares for a side to move
     moves = []
-    check_castle(position)
     for piece in Piece:
         piece_bb = position.pieces[position.turn][piece]
         while piece_bb:
@@ -254,7 +260,6 @@ def generate_moves(position):
                     moves.append(move)
 
             piece_bb = hp.clear_bit(piece_bb, hp.lsb(src))
-    
     castling = check_castle(position)
     for move in castling:
         if move.is_valid():

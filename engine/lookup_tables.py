@@ -1,6 +1,5 @@
 import numpy as np
 from engine.constants import Rank, File, Color
-from engine.chessboard import Chessboard
 from engine.square import Square
 import engine.helper as hp
 

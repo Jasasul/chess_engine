@@ -2,7 +2,6 @@ from flask import render_template, url_for, redirect, Blueprint, jsonify, reques
 import random as rn
 from engine.chessboard import Chessboard
 from engine.movegen import generate_moves
-import time
 
 routes = Blueprint('routes', __name__)
 
