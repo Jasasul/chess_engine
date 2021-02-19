@@ -19,7 +19,8 @@ def handle_request():
     # move generation
     moves = generate_moves(board)
     move = rn.choice(moves)
-    board.make_move(move)
     move_string = str(move)
+    for move in moves:
+        print(f'Move {move} is en passant move: {move.ep}')
     # sending move generated back to the GUI
     return jsonify(move=move_string)

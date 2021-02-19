@@ -5,7 +5,4 @@ import random as rn
 
 board = Chessboard()
 board.set_board('8/8/5b2/8/8/8/8/R3K3 w KQkq - 0 1')
-moves = generate_moves(board)
-x = [1, 2, 3, 4]
-x[0] ^= 1
-print(x)
+print(1 << (-1))

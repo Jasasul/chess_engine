@@ -17,11 +17,12 @@ class Chessboard(object):
         self.en_passant = None
         self.halfmove = np.uint64(0)
         self.fullmove = np.uint64(0)
-        self.start_fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+        self.fen = None
         self.move_list = []
 
     def reset(self):
         # resets all properties of the position obj
+        self.fen = None
         self.pieces = np.zeros((2, 6), dtype=np.uint64)
         self.colors = np.zeros(2, dtype=np.uint64)
         self.occupancy = np.uint64(0)
@@ -104,6 +105,7 @@ class Chessboard(object):
     def set_board(self, fen):
         # sets a chessboard object according to the FEN given
         self.reset()
+        self.fen = fen
 
         fen_parts = fen.split()
 
@@ -174,7 +176,6 @@ class Chessboard(object):
             self.set_castle(move)
         if move.castle != None:
             self.make_castle(move)
-            hp.print_bitboard(self.pieces[self.turn][Piece.ROOK])
         # the 50 move rule - if a moveblack or white is not a capture
         # or a pawn move for 50 turns the game is considered draw
         self.halfmove += 1
