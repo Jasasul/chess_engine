@@ -28,7 +28,7 @@ class Chessboard(object):
         self.occupancy = np.uint64(0)
         self.turn = np.uint64(0)
         self.castle = np.zeros((2, 2), dtype=np.uint64)
-        self.enpassant = False
+        self.en_passant = None
         self.halfmove = np.uint64(0)
         self.fullmove = np.uint64(0)
     
@@ -96,6 +96,8 @@ class Chessboard(object):
     def bb_adjust(self):
         # sets up helper bitboards from piece bb
         # one for each color and one for total occupancy
+        self.colors = np.zeros(2, dtype=np.uint64)
+        self.occupancy = np.uint64(0)
         for color in Color:
             for piece in Piece:
                 self.colors[color] |= self.pieces[color][piece]
@@ -115,17 +117,6 @@ class Chessboard(object):
         self.set_move_clock(fen_parts[4], fen_parts[5])
         self.bb_adjust()
     
-    def set_en_passant(self, move):
-        # if the move is double push, sets single push as en passant target square
-        if move.piece == Piece.PAWN:
-            if self.turn == Color.WHITE:
-                double = move.dest & (move.src << np.uint(16))
-                if double:
-                    self.en_passant = move.src << np.uint(8)
-            if self.turn == Color.BLACK:
-                double = move.dest & (move.src >> np.uint(16))
-                if double:
-                    self.en_passant = move.src >> np.uint(8)
     
     def set_castle(self, move):
         # if a king or a rook moves form their original square
@@ -158,24 +149,37 @@ class Chessboard(object):
             castled = h_rook >> np.uint8(2) 
             self.pieces[self.turn][Piece.ROOK] ^= h_rook
             self.pieces[self.turn][Piece.ROOK] ^= castled
+            move.castle = Castle.OO
         # queenside caslte - rook on A file is moved1
         if move.castle == Castle.OOO:
             castled = a_rook << np.uint8(3) 
             self.pieces[self.turn][Piece.ROOK] ^= a_rook
             self.pieces[self.turn][Piece.ROOK] ^= castled
+            move.castle = Castle.OOO
+        
+    def make_en_passant(self, move):
+        if self.turn == Color.WHITE:
+            captured_pawn = move.dest >> np.uint8(8)
+        if self.turn == Color.BLACK:
+            captured_pawn = move.dest << np.uint8(8)
+        self.pieces[self.turn ^ 1][Piece.PAWN] ^= captured_pawn
+        self.en_passant = None
 
 
     def make_move(self, move):
         # makes a move on internal chessboard
-        self.pieces[self.turn][move.piece] ^= move.src | move.dest
+        self.pieces[self.turn][move.piece] ^= move.src
+        self.pieces[self.turn][move.piece] ^= move.dest
         if move.captured != None:
             self.pieces[self.turn ^ 1][move.captured] ^= move.dest
-        self.bb_adjust()
-        self.set_en_passant(move)
-        if move.piece == Piece.KING or move.piece == Piece.ROOK:
-            self.set_castle(move)
         if move.castle != None:
             self.make_castle(move)
+        if move.piece == Piece.KING or move.piece == Piece.ROOK:
+            self.set_castle(move)
+        if move.ep == True:
+            self.make_en_passant(move)
+        if move.new_ep != None:
+            self.en_passant = move.new_ep
         # the 50 move rule - if a moveblack or white is not a capture
         # or a pawn move for 50 turns the game is considered draw
         self.halfmove += 1
@@ -184,4 +188,7 @@ class Chessboard(object):
         # a full move consist of white and black move
         if self.turn == Color.BLACK:
             self.fullmove += 1
+        self.bb_adjust()
+        self.move_list.append(move)
         self.turn ^= 1
+        

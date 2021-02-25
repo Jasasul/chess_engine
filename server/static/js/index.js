@@ -2,6 +2,7 @@ let board = null
 let game = new Chess()
 let whiteGray = '#a9a9a9'
 let blackGrey = '#696969'
+console.log('ok');
 
 function generateMove(input_fen){
   // sends FEN position to the flask server which generates moves
@@ -13,7 +14,12 @@ function generateMove(input_fen){
         data: input_fen,
         success: function(data) {
           let move = data.move
-          hightlightMove(move)
+          console.log(move);
+          if (move == 'Invalid fen') {
+            alert('Invalid fen')
+          } else {
+            hightlightMove(move)  
+          }
         }
     })
 }
@@ -37,7 +43,7 @@ function hightlightMove(move) {
   });
 }
 
-$(window).click(function() {
+$(window).on('click', function() {
   $('.white-highlight').removeClass('white-highlight')
   $('.black-highlight').removeClass('black-highlight')
 })
@@ -49,10 +55,10 @@ function squareIsVaild(square) {
     is_valid = false
   } else {
     // if 2 chars, check if the format is correct file A-H and rank 1-8
-    if (square[0] <'a' | square[0] > 'h') {
+    if (square[0] <= 'a' | square[0] >= 'h') {
       is_valid = false
     }
-    if (square[1] < 0 | square[1] > 8) {
+    if (square[1] <= 1 | square[1] >= 8) {
       is_valid = false
     }
   }
@@ -99,43 +105,29 @@ function displayFen(fen) {
   $('.fen-string').text(fen)
 }
 
-$('.btn-start').click(function() {
-  // sets starting position
+$('.btn-start').on('click', function() {
   board.start()
-  displayFen(buildFen());
+  buildFen()
 })
-
-$('.btn-empty').click(function() {
-  // sets empty position
+  
+$('.btn-empty').on('click', function() {
   board.clear()
-  displayFen(buildFen())
+  buildFen()
 })
 
-$('.btn-move').click(function() {
+$('.btn-move').on('click', function() {
   // generates a best move
-  let is_valid = false
-  let chars = ['p', 'n', 'b', 'r', 'q', 'k']
-  let fen = $('.fen-string').text()
-  let first_part = fen.split(' ')[0]
-  for (let i = 0; i < first_part.length; i++) {
-    if (first_part[i] in chars | first_part[i].toLowerCase() in chars) {
-      is_valid = true
-    }
-  }
-  if (is_valid) {
-    generateMove(fen)
-  } else {
-    alert('empty board')
-  }
+  buildFen()
+  generateMove($('.fen-string').text())
 })
 
-$('.btn-side').click(function() {
+$('.btn-side').on('click', function() {
   // checks which side to move (only one)
   $('.btn-side').removeClass('active-side')
   $(this).addClass('active-side');
 })
 
-$('.btn-castle').click(function() {
+$('.btn-castle').on('click', function() {
   // changes castle availability
   if ($(this).hasClass('active-side')) {
     $(this).removeClass('active-side')
@@ -144,27 +136,22 @@ $('.btn-castle').click(function() {
   }
 })
 
-$('.fen-btn').click(function() {
+$('.fen-btn').on('click', function() {
   // optins changes -> we might need a new fen
   buildFen()
 })
 
-$('.ep-input').keyup(function() {
+$('.ep-input').on('keyup', function() {
   // sets en passant target if the square is valid
   buildFen()
 })
-
-
-function onSnapEnd() {
-  displayFen(buildFen())
-}
 
 let config = {
   draggable: true,
   dropOffBoard: 'trash',
   sparePieces: true,
-  onSnapEnd: onSnapEnd
 }
 
+
 board = Chessboard('board', config)
-displayFen(buildFen())
+buildFen()

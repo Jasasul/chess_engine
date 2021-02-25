@@ -92,6 +92,7 @@ def gen_pawn_moves(position, src):
     if single.is_valid():
         moves.append(single)
         double = gen_double_push(position, src)
+        double.new_ep = single.dest
         moves.append(double)
         special = gen_en_passant(position)
         moves += special
@@ -262,8 +263,6 @@ def generate_moves(position):
 
             if piece == Piece.PAWN:
                 moveset = gen_pawn_moves(position, src)
-                for move in moveset:
-                    print(move.src)
             if piece == Piece.KNIGHT:
                 moveset = gen_knight_moves(position, src)
             if piece == Piece.BISHOP:
@@ -275,16 +274,11 @@ def generate_moves(position):
             if piece == Piece.KING:
                 moveset = gen_king_moves(position, src)
 
-            for move in moveset:
-                if move.is_valid():
-                    moves.append(move)
+            moves += [move for move in moveset if move.is_valid()]
 
             piece_bb = hp.clear_bit(piece_bb, hp.lsb(src))
-    castling = check_castle(position)
-    for move in castling:
-        if move.is_valid():
-            moves.append(move)
+
+    moves += [move for move in check_castle(position) if move.is_valid()]
     
-    legal = legal_moves(position, moves)
 
     return moves

@@ -1,5 +1,6 @@
 from flask import render_template, url_for, redirect, Blueprint, jsonify, request
 import random as rn
+import engine.helper as hp
 from engine.chessboard import Chessboard
 from engine.movegen import generate_moves
 
@@ -15,12 +16,14 @@ def handle_request():
     # initial position
     board = Chessboard()
     fen = request.get_data().decode()
-    board.set_board(fen)
-    # move generation
-    moves = generate_moves(board)
-    move = rn.choice(moves)
-    move_string = str(move)
-    for move in moves:
-        print(f'Move {move} is en passant move: {move.ep}')
-    # sending move generated back to the GUI
-    return jsonify(move=move_string)
+    if hp.validate_fen(fen):
+        board.set_board(fen)
+        # move generation
+        moves = generate_moves(board)
+        move = rn.choice(moves)
+        board.make_move(move)
+        move_string = str(move)
+        # sending move generated back to the GUI
+        return jsonify(move=move_string)
+    else:
+        return jsonify(move='Invalid fen')
