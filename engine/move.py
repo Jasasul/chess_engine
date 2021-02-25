@@ -3,15 +3,16 @@ import engine.helper as hp
 
 class Move(object):
     def __init__(self, src=None, dest=None, piece=None,
-                 captured=None, promo=None, ep=False, castle=None, new_ep=None):
+                 captured=None, promo=None, is_ep=False, castle=None, new_ep=None):
         self.src = src # source square bb
         self.dest = dest # destination square bb
         self.piece = piece # piece (0-5)
+        # optional
         self.promo = promo # promotion piece (0-5)
-        self.ep = ep # is en passant
+        self.is_ep = is_ep # is ep capture
         self.castle = castle # handle castling rights (True or False)
-        self.captured = captured 
-        self.new_ep = new_ep
+        self.captured = captured # capture piece (0-5) 
+        self.new_ep = new_ep # stores new ep target square for opposite side if the move is double-push
     
     def is_valid(self):
         # a move has to have a source, a destination and a piece

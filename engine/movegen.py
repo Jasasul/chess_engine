@@ -65,6 +65,9 @@ def gen_single_push(position, src):
         move.dest = single_push
         move.piece = Piece.PAWN
     
+    if move.dest & tb.RANKS[7 - 7*position.turn]:
+        move.promo = Piece.QUEEN
+    
     return move
 
 def gen_double_push(position, src):
@@ -110,14 +113,14 @@ def gen_pawn_moves(position, src):
 def gen_en_passant(position):
     # if there is an en passant target generate ep moves
     moves = []
-    if position.en_passant != None:
+    if position.ep_square != None:
         possible_squares = get_pawn_attacks(
-            hp.lsb(position.en_passant),
+            hp.lsb(position.ep_square),
             position.turn ^ 1)
         attacks = possible_squares & position.pieces[position.turn][Piece.PAWN]
         while attacks:
             attack = Square(hp.lsb(attacks)).to_bitboard()
-            move = Move(attack, position.en_passant, Piece.PAWN, ep=True)
+            move = Move(attack, position.ep_square, Piece.PAWN, is_ep=True)
             moves.append(move)
             attacks = hp.clear_bit(attacks, hp.lsb(attack))
     

@@ -14,7 +14,7 @@ class Chessboard(object):
         self.occupancy = np.uint64(0)
         self.turn = np.uint64(0)
         self.castle = np.zeros((2, 2), dtype=np.uint64)
-        self.en_passant = None
+        self.ep_square = None
         self.halfmove = np.uint64(0)
         self.fullmove = np.uint64(0)
         self.fen = None
@@ -28,7 +28,7 @@ class Chessboard(object):
         self.occupancy = np.uint64(0)
         self.turn = np.uint64(0)
         self.castle = np.zeros((2, 2), dtype=np.uint64)
-        self.en_passant = None
+        self.ep_square = None
         self.halfmove = np.uint64(0)
         self.fullmove = np.uint64(0)
     
@@ -86,7 +86,7 @@ class Chessboard(object):
                 self.castle[Color.BLACK][Castle.OOO] = 1
         # en passant target square if any
         if ep_fen != '-':
-            self.en_passant = Square(Square.get_index(ep_fen)).to_bitboard()
+            self.ep_square = Square(Square.get_index(ep_fen)).to_bitboard()
     
     def set_move_clock(self, half_fen, full_fen):
         # sets halfmove and fullmove clock
@@ -158,12 +158,18 @@ class Chessboard(object):
             move.castle = Castle.OOO
         
     def make_en_passant(self, move):
+        # handles en passant capture
         if self.turn == Color.WHITE:
             captured_pawn = move.dest >> np.uint8(8)
         if self.turn == Color.BLACK:
             captured_pawn = move.dest << np.uint8(8)
         self.pieces[self.turn ^ 1][Piece.PAWN] ^= captured_pawn
-        self.en_passant = None
+        self.ep_square = None
+    
+    def make_promo(self, move):
+        # handles promotioj
+        self.pieces[self.turn][move.piece] ^= move.dest
+        self.pieces[self.turn][move.promo] ^= move.dest
 
 
     def make_move(self, move):
@@ -176,10 +182,12 @@ class Chessboard(object):
             self.make_castle(move)
         if move.piece == Piece.KING or move.piece == Piece.ROOK:
             self.set_castle(move)
-        if move.ep == True:
+        if move.is_ep:
             self.make_en_passant(move)
         if move.new_ep != None:
-            self.en_passant = move.new_ep
+            self.ep_square = move.new_ep
+        if move.promo != None:
+            self.make_promo(move)
         # the 50 move rule - if a moveblack or white is not a capture
         # or a pawn move for 50 turns the game is considered draw
         self.halfmove += 1
@@ -190,5 +198,6 @@ class Chessboard(object):
             self.fullmove += 1
         self.bb_adjust()
         self.move_list.append(move)
+        hp.print_bitboard(self.pieces[self.turn][Piece.QUEEN])
         self.turn ^= 1
         
