@@ -198,6 +198,5 @@ class Chessboard(object):
             self.fullmove += 1
         self.bb_adjust()
         self.move_list.append(move)
-        hp.print_bitboard(self.pieces[self.turn][Piece.QUEEN])
         self.turn ^= 1
         

@@ -245,15 +245,16 @@ def is_attacked(position, i, color):
 
     return False
 
-def legal_moves(position, moves):
-    for move in moves:
-        test_board = Chessboard()
-        test_board.set_board(position.fen)
-        test_board.make_move(move)
-        if move.piece == Piece.PAWN:
-            pass
-        king = test_board.pieces[position.turn][Piece.KING]
-        attacked = is_attacked(test_board, hp.lsb(king), position.turn ^ 1)
+def is_legal(position, move):
+    test_board = Chessboard()
+    test_board.set_board(position.fen)
+    test_board.make_move(move)
+    if move.piece == Piece.PAWN:
+        pass
+    king = test_board.pieces[position.turn][Piece.KING]
+    attacked = is_attacked(test_board, hp.lsb(king), position.turn ^ 1)
+
+    return not attacked
 
 def generate_moves(position):
     # generates moves for all pieces on all squares for a side to move
@@ -282,6 +283,9 @@ def generate_moves(position):
             piece_bb = hp.clear_bit(piece_bb, hp.lsb(src))
 
     moves += [move for move in check_castle(position) if move.is_valid()]
-    
 
-    return moves
+    legal_moves = [move for move in moves if is_legal(position, move)]
+    for move in legal_moves:
+        print(move)
+
+    return legal_moves
