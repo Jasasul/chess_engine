@@ -172,7 +172,7 @@ def check_castle(position):
     moves = []
     king_side = Move()
     queen_side = Move()
-    # squares are empty
+    # squares must be empty
     f_square = king << np.uint8(1)
     g_square = king << np.uint8(2)
     d_square = king >> np.uint8(1)
@@ -184,7 +184,7 @@ def check_castle(position):
     d_empty = d_square & ~position.occupancy
     c_empty = c_square & ~position.occupancy
     b_empty = b_square & ~position.occupancy
-    # squares are not under attack
+    # squares must not be under attack
     f_attacked = is_attacked(position, hp.lsb(f_square), position.turn ^ 1)
     g_attacked = is_attacked(position, hp.lsb(g_square), position.turn ^ 1)
     d_attacked = is_attacked(position, hp.lsb(d_square), position.turn ^ 1)
@@ -246,6 +246,7 @@ def is_attacked(position, i, color):
     return False
 
 def is_legal(position, move):
+    # move is illegal if it leaves king in check
     test_board = Chessboard()
     test_board.set_board(position.fen)
     test_board.make_move(move)
@@ -264,7 +265,7 @@ def generate_moves(position):
         while piece_bb:
             moveset = []
             src = Square(hp.lsb(piece_bb)).to_bitboard()
-
+            # generating standard moves
             if piece == Piece.PAWN:
                 moveset = gen_pawn_moves(position, src)
             if piece == Piece.KNIGHT:
@@ -277,15 +278,12 @@ def generate_moves(position):
                 moveset = gen_queen_moves(position, src)
             if piece == Piece.KING:
                 moveset = gen_king_moves(position, src)
-
             moves += [move for move in moveset if move.is_valid()]
-
             piece_bb = hp.clear_bit(piece_bb, hp.lsb(src))
-
+    # generating castle moves
     moves += [move for move in check_castle(position) if move.is_valid()]
 
+    # filtering legal moves only
     legal_moves = [move for move in moves if is_legal(position, move)]
-    for move in legal_moves:
-        print(move)
 
     return legal_moves

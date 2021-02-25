@@ -20,8 +20,10 @@ def handle_request():
         board.set_board(fen)
         # move generation
         moves = generate_moves(board)
-        move = rn.choice(moves)
+        for move in moves:
+            if move.promo != None: break
         board.make_move(move)
+        board.unmake_move(move)
         move_string = str(move)
         # sending move generated back to the GUI
         return jsonify(move=move_string)

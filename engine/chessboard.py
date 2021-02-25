@@ -149,13 +149,25 @@ class Chessboard(object):
             castled = h_rook >> np.uint8(2) 
             self.pieces[self.turn][Piece.ROOK] ^= h_rook
             self.pieces[self.turn][Piece.ROOK] ^= castled
-            move.castle = Castle.OO
         # queenside caslte - rook on A file is moved1
         if move.castle == Castle.OOO:
             castled = a_rook << np.uint8(3) 
             self.pieces[self.turn][Piece.ROOK] ^= a_rook
             self.pieces[self.turn][Piece.ROOK] ^= castled
-            move.castle = Castle.OOO
+    
+    def unmake_castle(self, move):
+        # unmakes castle move
+        queen_rook = self.pieces[self.turn][Piece.ROOK] & tb.FILES[File.D]
+        king_rook = self.pieces[self.turn][Piece.ROOK] & tb.FILES[File.F]
+        
+        if move.castle == Castle.OO:
+            uncastled = king_rook << np.uint8(2)
+            self.pieces[self.turn][Piece.ROOK] ^= king_rook
+            self.pieces[self.turn][Piece.ROOK] ^= uncastled
+        if move.castle == Castle.OOO:
+            uncastled = queen_rook >> np.uint8(3)
+            self.pieces[self.turn][Piece.ROOK] ^= queen_rook
+            self.pieces[self.turn][Piece.ROOK] ^= uncastled
         
     def make_en_passant(self, move):
         # handles en passant capture
@@ -164,13 +176,19 @@ class Chessboard(object):
         if self.turn == Color.BLACK:
             captured_pawn = move.dest << np.uint8(8)
         self.pieces[self.turn ^ 1][Piece.PAWN] ^= captured_pawn
-        self.ep_square = None
+    
+    def unmake_en_passant(self, move):
+        # unmakes en passant move
+        if self.turn == Color.WHITE:
+            uncaptured_pawn = move.dest >> np.uint8(8)
+        if self.turn == Color.BLACK:
+            uncaptured_pawn = move.dest << np.uint8(8)
+        self.pieces[self.turn ^ 1][Piece.PAWN] ^= uncaptured_pawn
     
     def make_promo(self, move):
         # handles promotioj
         self.pieces[self.turn][move.piece] ^= move.dest
         self.pieces[self.turn][move.promo] ^= move.dest
-
 
     def make_move(self, move):
         # makes a move on internal chessboard
@@ -182,8 +200,11 @@ class Chessboard(object):
             self.make_castle(move)
         if move.piece == Piece.KING or move.piece == Piece.ROOK:
             self.set_castle(move)
+        # move is en passant
         if move.is_ep:
             self.make_en_passant(move)
+            self.ep_square = None
+        # move is double push
         if move.new_ep != None:
             self.ep_square = move.new_ep
         if move.promo != None:
@@ -199,4 +220,27 @@ class Chessboard(object):
         self.bb_adjust()
         self.move_list.append(move)
         self.turn ^= 1
+    
+    def unmake_move(self, move):
+        # resetting last move
+        # last move was made by the opposite color
+        # i.e. if it's black turn and we're unmaking move then last turn was white's
+        self.turn ^= 1
+        self.pieces[self.turn][move.piece] ^= move.dest
+        self.pieces[self.turn][move.piece] ^= move.src
+        if move.captured != None:
+            self.pieces[self.turn][move.captured] ^= move.dest
+        if (move.piece == Piece.ROOK or move.piece == Piece.KING) and move.castle != None:
+            self.unmake_castle(move)
+        # reseting ep capture
+        if move.is_ep:
+            self.unmake_en_passant(move)
+        # if move was double push reset the new en passant target square
+        if move.new_ep != None:
+            self.new_ep = None
+        # unmaking a promo is the same as making one
+        if move.promo != None:
+            self.make_promo(move)
+        self.bb_adjust()
+        self.move_list.remove(move)
         
