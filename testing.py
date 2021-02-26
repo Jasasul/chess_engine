@@ -1,7 +1,11 @@
-from engine.movegen import generate_moves, get_queen_attacks
-from engine.chessboard import Chessboard
+from engine.movegen import generate_legal_moves, generate_moves
+import engine.chessboard as cb
+import engine.movegen as mg
 import engine.helper as hp
 import random as rn
+import numpy as np
 
-x = 16
-print(bin(x & ~(1 << 2)))
+fen = ''
+board = cb.Chessboard()
+board.set_board(fen)
+perft_driver(board, 2)

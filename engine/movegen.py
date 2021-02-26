@@ -1,7 +1,8 @@
+import copy
 import numpy as np
 import engine.lookup_tables as tb
 import engine.helper as hp
-from engine.chessboard import Chessboard
+import engine.chessboard as cb
 from engine.constants import Color, Piece, Rank, Castle
 from engine.square import Square
 from engine.move import Move
@@ -93,12 +94,25 @@ def gen_pawn_moves(position, src):
     moves = []
     single = gen_single_push(position, src)
     if single.is_valid():
+        # generating under promo moves if the move is a promo
+        if single.promo != None:
+            for piece in Piece:
+                if piece == Piece.PAWN:
+                    continue
+                if piece == Piece.QUEEN:
+                    break
+                promo_move = copy.deepcopy(single)
+                promo_move.promo = piece
+                moves.append(promo_move)
         moves.append(single)
+        # checking double push
         double = gen_double_push(position, src)
         double.new_ep = single.dest
         moves.append(double)
+        # checking en passant moves
         special = gen_en_passant(position)
         moves += special
+    # generating attacks
     attacks = get_pawn_attacks(hp.lsb(src), position.turn)
     attacks &= position.colors[position.turn ^ 1]
     while attacks:
@@ -247,7 +261,7 @@ def is_attacked(position, i, color):
 
 def is_legal(position, move):
     # move is illegal if it leaves king in check
-    test_board = Chessboard()
+    test_board = cb.Chessboard()
     test_board.set_board(position.fen)
     test_board.make_move(move)
     if move.piece == Piece.PAWN:
@@ -260,6 +274,7 @@ def is_legal(position, move):
 def generate_moves(position):
     # generates moves for all pieces on all squares for a side to move
     moves = []
+    can_castle = False
     for piece in Piece:
         piece_bb = position.pieces[position.turn][piece]
         while piece_bb:
@@ -281,9 +296,13 @@ def generate_moves(position):
             moves += [move for move in moveset if move.is_valid()]
             piece_bb = hp.clear_bit(piece_bb, hp.lsb(src))
     # generating castle moves
-    moves += [move for move in check_castle(position) if move.is_valid()]
+    for castle in Castle:
+        if position.castle[position.turn][castle]:
+            can_castle = True
+    if can_castle:
+        moves += [move for move in check_castle(position) if move.is_valid()]
 
-    # filtering legal moves only
+    king = position.pieces[position.turn][Piece.KING]
     legal_moves = [move for move in moves if is_legal(position, move)]
 
     return legal_moves

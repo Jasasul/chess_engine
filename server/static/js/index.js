@@ -14,9 +14,8 @@ function generateMove(input_fen){
         data: input_fen,
         success: function(data) {
           let move = data.move
-          console.log(move);
-          if (move == 'Invalid fen') {
-            alert('Invalid fen')
+          if (move == 'Draw' || move == 'Checkmate' || move == 'Invalid fen') {
+            alert(move)
           } else {
             hightlightMove(move)  
           }
