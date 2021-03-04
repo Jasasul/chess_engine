@@ -118,129 +118,62 @@ class Chessboard(object):
         self.bb_adjust()
     
     
-    def set_castle(self, move):
-        # if a king or a rook moves form their original square
-        # that side castle right is lost
-        a1 = Square(0).to_bitboard()
-        h1 = Square(7).to_bitboard()
-        a8 = Square(56).to_bitboard()
-        h8 = Square(63).to_bitboard()
-
-        if move.piece == Piece.ROOK:
-            # if a rook moves from its original position
-            # that side castle is disabled
-            if (move.src & a1) or (move.src & a8):
-                self.castle[self.turn][Castle.OOO] = 0
-            if (move.src & h1) or (move.src & h8):
-                self.castle[self.turn][Castle.OO] = 0
-        
-        if move.piece == Piece.KING:
-            # if a king moves from its original square
-            # then the side looses all castling rights
-            self.castle[self.turn][Castle.OO] = 0
-            self.castle[self.turn][Castle.OOO] = 0
+    def make_ep(self, move):
+        # makes en passant move
+        if self.turn == Color.WHITE:
+            target = move.dest >> np.uint8(8)
+        if self.turn == Color.BLACK:
+            target = move.dest << np.uint8(8)
+        self.pieces[self.turn ^ 1][Piece.PAWN] ^= target
     
     def make_castle(self, move):
-        # if a move is a castle, move a rook accodringly
-        a_rook = self.pieces[self.turn][Piece.ROOK] & tb.FILES[File.A]
-        h_rook = self.pieces[self.turn][Piece.ROOK] & tb.FILES[File.H]
-        # kingside castle - rook on H file is moved
-        if move.castle == Castle.OO:
-            castled = h_rook >> np.uint8(2) 
-            self.pieces[self.turn][Piece.ROOK] ^= h_rook
-            self.pieces[self.turn][Piece.ROOK] ^= castled
-        # queenside caslte - rook on A file is moved1
-        if move.castle == Castle.OOO:
-            castled = a_rook << np.uint8(3) 
-            self.pieces[self.turn][Piece.ROOK] ^= a_rook
-            self.pieces[self.turn][Piece.ROOK] ^= castled
-    
-    def unmake_castle(self, move):
-        # unmakes castle move
-        queen_rook = self.pieces[self.turn][Piece.ROOK] & tb.FILES[File.D]
-        king_rook = self.pieces[self.turn][Piece.ROOK] & tb.FILES[File.F]
-        
-        if move.castle == Castle.OO:
-            uncastled = king_rook << np.uint8(2)
-            self.pieces[self.turn][Piece.ROOK] ^= king_rook
-            self.pieces[self.turn][Piece.ROOK] ^= uncastled
-        if move.castle == Castle.OOO:
-            uncastled = queen_rook >> np.uint8(3)
-            self.pieces[self.turn][Piece.ROOK] ^= queen_rook
-            self.pieces[self.turn][Piece.ROOK] ^= uncastled
-        
-    def make_en_passant(self, move):
-        # handles en passant capture
-        if self.turn == Color.WHITE:
-            captured_pawn = move.dest >> np.uint8(8)
-        if self.turn == Color.BLACK:
-            captured_pawn = move.dest << np.uint8(8)
-        self.pieces[self.turn ^ 1][Piece.PAWN] ^= captured_pawn
-    
-    def unmake_en_passant(self, move):
-        # unmakes en passant move
-        if self.turn == Color.WHITE:
-            uncaptured_pawn = move.dest >> np.uint8(8)
-        if self.turn == Color.BLACK:
-            uncaptured_pawn = move.dest << np.uint8(8)
-        self.pieces[self.turn ^ 1][Piece.PAWN] ^= uncaptured_pawn
-    
-    def make_promo(self, move):
-        # handles promotioj
-        self.pieces[self.turn][move.piece] ^= move.dest
-        self.pieces[self.turn][move.promo] ^= move.dest
+        # makes a castle move for the rooks
+        a1 = Square(1).to_bitboard()
+        a8 = Square(56).to_bitboard()
+        h1 = Square(7).to_bitboard()
+        h8 = Square(63).to_bitboard()
 
+        if self.turn == Color.WHITE:
+            if move.castle == Castle.OOO:
+                self.pieces[self.turn][Piece.ROOK] ^= a1
+                self.pieces[self.turn][Piece.ROOK] |= a1 << np.uint(3)
+            if move.castle == Castle.OO:
+                self.pieces[self.turn][Piece.ROOK] ^= h1
+                self.pieces[self.turn][Piece.ROOK] |= h1 >> np.uint(2)
+        if self.turn == Color.BLACK:
+            if move.castle == Castle.OOO:
+                self.pieces[self.turn][Piece.ROOK] ^= a8
+                self.pieces[self.turn][Piece.ROOK] |= a8 << np.uint(3)
+            if move.castle == Castle.OO:
+                self.pieces[self.turn][Piece.ROOK] ^= h8
+                self.pieces[self.turn][Piece.ROOK] |= h8 >> np.uint(2)
+
+
+    
     def make_move(self, move):
-        # makes a move on internal chessboard
+        # makes a move using copy/make approach
         self.pieces[self.turn][move.piece] ^= move.src
-        self.pieces[self.turn][move.piece] ^= move.dest
+        self.pieces[self.turn][move.piece] |= move.dest
+        # capture handling
         if move.captured != None:
             self.pieces[self.turn ^ 1][move.captured] ^= move.dest
-        if move.castle != None:
-            self.make_castle(move)
-        if move.piece == Piece.KING or move.piece == Piece.ROOK:
-            self.set_castle(move)
-        # move is en passant
-        if move.is_ep:
-            self.make_en_passant(move)
-            self.ep_square = None
-        # move is double push
-        if move.new_ep != None:
-            self.ep_square = move.new_ep
+        # promo handling
         if move.promo != None:
-            self.make_promo(move)
-        # the 50 move rule - if a moveblack or white is not a capture
-        # or a pawn move for 50 turns the game is considered draw
-        self.halfmove += 1
-        if move.piece == Piece.PAWN or move.captured != None:
-            halfmove = 0
-        # a full move consist of white and black move
-        if self.turn == Color.BLACK:
-            self.fullmove += 1
+            self.pieces[self.turn][move.promo] |= move.dest
+            self.pieces[self.turn][Piece.PAWN] ^= move.dest
+        # en passant capture handling
+        if move.is_ep:
+            self.make_ep(move)
+        self.ep_square = move.new_ep
+        # castle handling
+        if move.piece == Piece.ROOK and move.castle != None:
+            self.castle[self.turn][move.castle] = 0
+        if move.piece == Piece.KING:
+            self.castle[self.turn][Castle.OO] = 0
+            self.castle[self.turn][Castle.OOO] = 0
+            if move.castle != None:
+                self.make_castle(move) 
         self.bb_adjust()
         self.move_list.append(move)
         self.turn ^= 1
-    
-    def unmake_move(self, move):
-        # resetting last move
-        # last move was made by the opposite color
-        # i.e. if it's black turn and we're unmaking move then last turn was white's
-        self.turn ^= 1
-        self.pieces[self.turn][move.piece] ^= move.dest
-        self.pieces[self.turn][move.piece] ^= move.src
-        if move.captured != None:
-            self.pieces[self.turn][move.captured] ^= move.dest
-        if (move.piece == Piece.ROOK or move.piece == Piece.KING) and move.castle != None:
-            self.unmake_castle(move)
-        # reseting ep capture
-        if move.is_ep:
-            self.unmake_en_passant(move)
-        # if move was double push reset the new en passant target square
-        if move.new_ep != None:
-            self.new_ep = None
-        # unmaking a promo is the same as making one
-        if move.promo != None:
-            self.make_promo(move)
-        self.bb_adjust()
-        self.move_list.remove(move)
         

@@ -66,9 +66,6 @@ def gen_single_push(position, src):
         move.dest = single_push
         move.piece = Piece.PAWN
     
-    if move.dest & tb.RANKS[7 - 7*position.turn]:
-        move.promo = Piece.QUEEN
-    
     return move
 
 def gen_double_push(position, src):
@@ -162,6 +159,22 @@ def gen_rook_moves(position, src):
     attacks = get_rook_attacks(hp.lsb(src), position.occupancy)
     moves += gen_moves(position, Piece.ROOK, src, attacks)
     
+    a1 = Square(0).to_bitboard()
+    a8 = Square(56).to_bitboard()
+    h1 = Square(7).to_bitboard()
+    h8 = Square(63).to_bitboard()
+    # castling availability
+    queenside = position.castle[position.turn][Castle.OOO]
+    kingside = position.castle[position.turn][Castle.OO]
+    # if rook moves from its original square that sides castle is not available anymore
+    for move in moves:
+        if position.turn == Color.WHITE:
+            if (move.src & a1) and queenside != 0: move.castle = Castle.OOO
+            if (move.src & h1) and kingside != 0: move.castle = Castle.OO
+        if position.turn == Color.BLACK:
+            if (move.src & a8) and queenside != 0: move.castle = Castle.OOO
+            if (move.src & h8) and kingside != 0: move.castle = Castle.OO
+    
     return moves
 
 def gen_queen_moves(position, src):
@@ -182,45 +195,50 @@ def gen_king_moves(position, src):
 
 def check_castle(position):
     # generates all castle moves available (kingside, queenside)
-    king = position.pieces[position.turn][Piece.KING]
     moves = []
-    king_side = Move()
-    queen_side = Move()
-    # squares must be empty
-    f_square = king << np.uint8(1)
-    g_square = king << np.uint8(2)
-    d_square = king >> np.uint8(1)
-    c_square = king >> np.uint8(2)
-    b_square = king >> np.uint8(3)
+    king = position.pieces[position.turn][Piece.KING]
+    
+    queenside = position.castle[position.turn][Castle.OO]
+    kingside = position.castle[position.turn][Castle.OOO]
+    # can actually castle
+    if not (queenside and kingside): return moves
+    # king must not be in check
+    if in_check(position): return moves
+    # king is not on his original square
+    if position.turn == Color.WHITE and king != Square(4).to_bitboard():
+        return moves
+    if position.turn == Color.BLACK and king != Square(60).to_bitboard():
+        return moves
+    # squares between kning and rook are empty
+    c = king >> np.uint(2) & ~position.occupancy
+    d = king >> np.uint(1) & ~position.occupancy
+    g = king << np.uint(2) & ~position.occupancy
+    f = king << np.uint(1) & ~position.occupancy
+    if  c != 0 and d != 0:
+        c_attacked = is_attacked(position, hp.lsb(c), position.turn ^ 1)
+        d_attacked = is_attacked(position, hp.lsb(d), position.turn ^ 1)
+    else:
+        c_attacked = True
+        d_attacked = True
+    if g != 0 and f != 0:
+        g_attacked = is_attacked(position, hp.lsb(g), position.turn ^ 1)
+        f_attacked = is_attacked(position, hp.lsb(f), position.turn ^ 1)
+    else:
+        g_attacked = True
+        f_attacked = True
 
-    f_empty = f_square & ~position.occupancy
-    g_empty = g_square & ~position.occupancy
-    d_empty = d_square & ~position.occupancy
-    c_empty = c_square & ~position.occupancy
-    b_empty = b_square & ~position.occupancy
-    # squares must not be under attack
-    f_attacked = is_attacked(position, hp.lsb(f_square), position.turn ^ 1)
-    g_attacked = is_attacked(position, hp.lsb(g_square), position.turn ^ 1)
-    d_attacked = is_attacked(position, hp.lsb(d_square), position.turn ^ 1)
-    c_attacked = is_attacked(position, hp.lsb(c_square), position.turn ^ 1)
-    b_attacked = is_attacked(position, hp.lsb(b_square), position.turn ^ 1)
-    # kingside and queenside castle
-    if position.castle[position.turn][Castle.OO]:
-        if f_empty and g_empty:
-            if not(f_attacked or g_attacked):
-                king_side.src = king
-                king_side.dest = g_square
-                king_side.piece = Piece.KING
-                king_side.castle = Castle.OO
-                moves.append(king_side)
-    if position.castle[position.turn][Castle.OOO]:
-        if d_empty and c_empty and b_empty:
-            if not(d_attacked or c_attacked or b_attacked):
-                queen_side.src = king
-                queen_side.dest = c_square
-                queen_side.piece = Piece.KING
-                queen_side.castle = Castle.OOO
-                moves.append(queen_side)
+    if c_attacked or d_attacked:
+        queenside = 0
+    if g_attacked or f_attacked:
+        kingside = 0
+    # generating moves if castle for the side is available
+    if (c and d) and queenside:
+        move = Move(king, c, Piece.KING, castle=Castle.OOO)
+        moves.append(move)
+    if (f and g) and kingside:
+        move = Move(king, g, Piece.KING, castle=Castle.OO)
+        moves.append(move)
+
     return moves
 
 def check_capture(position, move):
@@ -261,8 +279,7 @@ def is_attacked(position, i, color):
 
 def is_legal(position, move):
     # move is illegal if it leaves king in check
-    test_board = cb.Chessboard()
-    test_board.set_board(position.fen)
+    test_board = copy.deepcopy(position)
     test_board.make_move(move)
     if move.piece == Piece.PAWN:
         pass
@@ -295,14 +312,28 @@ def generate_moves(position):
                 moveset = gen_king_moves(position, src)
             moves += [move for move in moveset if move.is_valid()]
             piece_bb = hp.clear_bit(piece_bb, hp.lsb(src))
+    
+    under_promos = []
+    # if move is a promo, we must add 4 under promotoin moves (knight to rook)
+    for move in moves:
+        if move.piece == Piece.PAWN:
+            if move.dest & tb.RANKS[7 - position.turn*7]:
+                move.promo = Piece.QUEEN
+                for piece in Piece:
+                    if piece == Piece.PAWN: continue
+                    if piece == Piece.QUEEN: break
+                    promo_copy = copy.deepcopy(move)
+                    promo_copy.promo = piece
+                    under_promos.append(promo_copy)
+    if under_promos != []:
+        print(under_promos)
+    moves += under_promos
     # generating castle moves
-    for castle in Castle:
-        if position.castle[position.turn][castle]:
-            can_castle = True
-    if can_castle:
-        moves += [move for move in check_castle(position) if move.is_valid()]
+    moves += [move for move in check_castle(position) if move.is_valid()]
 
+    return moves
+
+def in_check(position):
+    # is opposite color's king is checked
     king = position.pieces[position.turn][Piece.KING]
-    legal_moves = [move for move in moves if is_legal(position, move)]
-
-    return legal_moves
+    return is_attacked(position, hp.lsb(king), position.turn ^ 1)

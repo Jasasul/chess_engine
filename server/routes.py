@@ -21,12 +21,12 @@ def handle_request():
         board.set_board(fen)
         # move generation
         moves = mg.generate_moves(board)
+        moves = [move for move in moves if mg.is_legal(board, move)]
         if moves == []:
             return jsonify(move=in_check(board))
-        move = rn.choice(moves)
-        move_string = str(move)
+        move = rn.choice([move for move in moves if move.piece == Piece.PAWN])
         board.make_move(move)
-        board.unmake_move(move)
+        move_string = str(move)
         # sending move generated back to the GUI
         return jsonify(move=move_string)
     return jsonify(move='Invalid fen')
