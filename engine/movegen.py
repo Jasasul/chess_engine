@@ -129,11 +129,13 @@ def gen_en_passant(position):
             hp.lsb(position.ep_square),
             position.turn ^ 1)
         attacks = possible_squares & position.pieces[position.turn][Piece.PAWN]
+        i = 0
         while attacks:
             attack = Square(hp.lsb(attacks)).to_bitboard()
             move = Move(attack, position.ep_square, Piece.PAWN, is_ep=True)
             moves.append(move)
             attacks = hp.clear_bit(attacks, hp.lsb(attack))
+    position.ep_square = None
     
     return moves
 
@@ -198,18 +200,19 @@ def check_castle(position):
     moves = []
     king = position.pieces[position.turn][Piece.KING]
     
-    queenside = position.castle[position.turn][Castle.OO]
-    kingside = position.castle[position.turn][Castle.OOO]
+    queenside = position.castle[position.turn][Castle.OOO]
+    kingside = position.castle[position.turn][Castle.OO]
     # can actually castle
-    if not (queenside and kingside): return moves
+    if not (queenside or kingside): return moves
     # king must not be in check
-    if in_check(position): return moves
+    if in_check(position, position.turn): return moves
     # king is not on his original square
     if position.turn == Color.WHITE and king != Square(4).to_bitboard():
         return moves
     if position.turn == Color.BLACK and king != Square(60).to_bitboard():
         return moves
     # squares between kning and rook are empty
+    b = king >> np.uint(3) & ~position.occupancy
     c = king >> np.uint(2) & ~position.occupancy
     d = king >> np.uint(1) & ~position.occupancy
     g = king << np.uint(2) & ~position.occupancy
@@ -232,7 +235,7 @@ def check_castle(position):
     if g_attacked or f_attacked:
         kingside = 0
     # generating moves if castle for the side is available
-    if (c and d) and queenside:
+    if (b and c and d) and queenside:
         move = Move(king, c, Piece.KING, castle=Castle.OOO)
         moves.append(move)
     if (f and g) and kingside:
@@ -262,7 +265,7 @@ def gen_moves(position, piece, src, attacks):
 
 def is_attacked(position, i, color):
     # returns if a square is attacked by a color given
-    if get_pawn_attacks(i, color) & position.pieces[color ^ 1][Piece.PAWN]:
+    if get_pawn_attacks(i, color ^ 1) & position.pieces[color][Piece.PAWN]:
         return True
     if get_knight_attacks(i) & position.pieces[color][Piece.KNIGHT]:
         return True
@@ -281,17 +284,14 @@ def is_legal(position, move):
     # move is illegal if it leaves king in check
     test_board = copy.deepcopy(position)
     test_board.make_move(move)
-    if move.piece == Piece.PAWN:
-        pass
-    king = test_board.pieces[position.turn][Piece.KING]
-    attacked = is_attacked(test_board, hp.lsb(king), position.turn ^ 1)
+    # it's now opponent's turn, we must check for our side
+    attacked = in_check(test_board, test_board.turn ^ 1)
 
     return not attacked
 
 def generate_moves(position):
     # generates moves for all pieces on all squares for a side to move
     moves = []
-    can_castle = False
     for piece in Piece:
         piece_bb = position.pieces[position.turn][piece]
         while piece_bb:
@@ -325,15 +325,18 @@ def generate_moves(position):
                     promo_copy = copy.deepcopy(move)
                     promo_copy.promo = piece
                     under_promos.append(promo_copy)
-    if under_promos != []:
-        print(under_promos)
     moves += under_promos
     # generating castle moves
+    if position.is_move_list(['a1 b1', 'b4 b3']):
+        z = 1
     moves += [move for move in check_castle(position) if move.is_valid()]
 
     return moves
 
-def in_check(position):
-    # is opposite color's king is checked
-    king = position.pieces[position.turn][Piece.KING]
-    return is_attacked(position, hp.lsb(king), position.turn ^ 1)
+def in_check(position, color):
+    # if the side's king is in check
+    king = position.pieces[color][Piece.KING]
+    if color == Color.WHITE:
+        return is_attacked(position, hp.lsb(king), Color.BLACK)
+    if color == Color.BLACK:
+        return is_attacked(position, hp.lsb(king), Color.WHITE)

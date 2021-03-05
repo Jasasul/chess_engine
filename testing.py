@@ -14,19 +14,13 @@ def perft(position, test_board, depth):
 
     count = 0
     moves = mg.generate_moves(position)
-    string_moves = [str(move) + str(move.piece) for move in moves]
     for move in moves:
         if is_legal(position, move):
             new_pos = copy.deepcopy(position)
             new_pos.make_move(move)
-            test_string = str(move)
-            test_string = ''.join(test_string.split())
-            test_move = chess.Move.from_uci(test_string)
             new_pos = copy.deepcopy(position)
             new_pos.make_move(move)
-            test_board.push(test_move)
             count += perft(new_pos, test_board, depth-1)
-            test_board.pop()
             del new_pos
 
     return count
@@ -47,5 +41,5 @@ more = 'rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8'
 board = cb.Chessboard()
 board.set_board(tricky)
 test_board = chess.Board(tricky)
-x = perft(board, test_board, 2)
+x = perft(board, test_board, 3)
 print(x)

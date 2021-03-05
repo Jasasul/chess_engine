@@ -176,4 +176,10 @@ class Chessboard(object):
         self.bb_adjust()
         self.move_list.append(move)
         self.turn ^= 1
+
+    def is_move_list(self, move_list):
+        moves = [str(move) for move in self.move_list]
+        if moves == move_list:
+            return True
+        return False
         
