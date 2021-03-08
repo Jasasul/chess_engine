@@ -286,6 +286,9 @@ def is_legal(position, move):
     test_board.make_move(move)
     # it's now opponent's turn, we must check for our side
     attacked = in_check(test_board, test_board.turn ^ 1)
+    if attacked == False:
+        if in_check(test_board, test_board.turn):
+            move.is_check = True
 
     return not attacked
 
@@ -327,10 +330,12 @@ def generate_moves(position):
                     under_promos.append(promo_copy)
     moves += under_promos
     # generating castle moves
-    if position.is_move_list(['a1 b1', 'b4 b3']):
-        z = 1
     moves += [move for move in check_castle(position) if move.is_valid()]
 
+    return moves
+
+def legal_moves(position):
+    moves = [move for move in generate_moves(position) if is_legal(position, move)]
     return moves
 
 def in_check(position, color):

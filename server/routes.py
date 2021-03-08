@@ -19,20 +19,11 @@ def handle_request():
     fen = request.get_data().decode()
     if hp.validate_fen(fen):
         board.set_board(fen)
+        legal = mg.legal_moves(board)
         # move generation
-        moves = mg.generate_moves(board)
-        moves = [move for move in moves if mg.is_legal(board, move)]
-        if moves == []:
-            return jsonify(move=in_check(board))
-        move = rn.choice([move for move in moves if move.piece == Piece.PAWN])
-        board.make_move(move)
-        move_string = str(move)
-        # sending move generated back to the GUI
-        return jsonify(move=move_string)
+        moves = [move.get_notation(legal) for move in legal]
+        if len(moves) > 0:
+            move = rn.choice(moves)
+            # sending move generated back to the GUI
+            return jsonify(move=move)
     return jsonify(move='Invalid fen')
-
-def in_check(position):
-    king = position.pieces[position.turn][Piece.KING]
-    if mg.is_attacked(position, hp.lsb(king), position.turn ^ 1):
-        return 'Checkmate'
-    return 'Draw'

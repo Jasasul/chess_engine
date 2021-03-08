@@ -1,6 +1,7 @@
 import numpy as np
 import engine.helper as hp
 import engine.lookup_tables as tb
+import engine.square_tables as sqtb
 from engine.constants import Color, Rank, File, Piece, Castle
 from engine.square import Square
 
@@ -128,11 +129,10 @@ class Chessboard(object):
     
     def make_castle(self, move):
         # makes a castle move for the rooks
-        a1 = Square(1).to_bitboard()
+        a1 = Square(0).to_bitboard()
         a8 = Square(56).to_bitboard()
         h1 = Square(7).to_bitboard()
         h8 = Square(63).to_bitboard()
-
         if self.turn == Color.WHITE:
             if move.castle == Castle.OOO:
                 self.pieces[self.turn][Piece.ROOK] ^= a1
@@ -172,14 +172,7 @@ class Chessboard(object):
             self.castle[self.turn][Castle.OO] = 0
             self.castle[self.turn][Castle.OOO] = 0
             if move.castle != None:
-                self.make_castle(move) 
+                self.make_castle(move)
         self.bb_adjust()
         self.move_list.append(move)
         self.turn ^= 1
-
-    def is_move_list(self, move_list):
-        moves = [str(move) for move in self.move_list]
-        if moves == move_list:
-            return True
-        return False
-        

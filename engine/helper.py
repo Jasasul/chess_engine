@@ -27,6 +27,14 @@ def lsb(bb):
         if (bb >> np.uint8(i)) & np.uint8(1):
             return i
 
+def bit_count(bb):
+    # returns a number of bits set to 1
+    total = 0
+    for i in range(64):
+        if (bb >> np.uint8(i)) & np.uint8(1):
+            total += 1
+    return total
+
 def validate_fen(fen):
     # validates a fen string received from the client
     valid = True

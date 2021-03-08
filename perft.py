@@ -9,7 +9,7 @@ import random as rn
 import numpy as np
 import chess
 
-def perft(position, test_board, depth):
+def perft(position, depth):
     if depth == 0: return 1
 
     count = 0
@@ -18,9 +18,7 @@ def perft(position, test_board, depth):
         if is_legal(position, move):
             new_pos = copy.deepcopy(position)
             new_pos.make_move(move)
-            new_pos = copy.deepcopy(position)
-            new_pos.make_move(move)
-            count += perft(new_pos, test_board, depth-1)
+            count += perft(new_pos, depth-1)
             del new_pos
 
     return count
@@ -39,7 +37,6 @@ starting = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 tricky = 'r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1'
 more = 'rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8'
 board = cb.Chessboard()
-board.set_board(tricky)
-test_board = chess.Board(tricky)
-x = perft(board, test_board, 3)
+board.set_board(starting)
+x = perft(board, 4)
 print(x)
