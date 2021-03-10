@@ -37,6 +37,6 @@ starting = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 tricky = 'r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1'
 more = 'rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8'
 board = cb.Chessboard()
-board.set_board(starting)
-x = perft(board, 4)
+board.set_board(tricky)
+x = perft(board, 3)
 print(x)
