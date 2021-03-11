@@ -70,31 +70,44 @@ class Move(object):
 
     def get_notation(self, move_list):
         # creates a move notation in standard format
+        same_dest = []
         ag_notation = ''
 
         ag_notation += self.get_piece()
 
         for move in move_list:
             # distinguishing moves when 2 pieces of the same type move to the same square
-            src_sq = ''
-            if move != self and move.piece == self.piece and move.dest == self.dest:
-                if move.get_file() == self.get_file():
-                    src_sq += self.get_file()
-                if move.get_rank() == self.get_rank():
-                    src_sq += self.get_rank()
-                ag_notation += src_sq
+            if move == self: continue
+            if move.piece == Piece.PAWN: continue
+            if move.dest == self.dest and move.piece == self.piece:
+                same_dest.append(move)
         
+        file = self.get_file()
+        rank = self.get_rank()
+
+        src_sq = ''
+        if len(same_dest) > 1:
+            src_sq = f'{file}{rank}'
+        if len(same_dest) == 1:
+            move = same_dest[0]
+            move_file = move.get_file()
+            move_rank = move.get_rank()
+            if move_file != file: src_sq = file
+            elif move_rank != rank: src_sq = rank
+        
+        ag_notation += src_sq
+
         ag_notation += self.get_capture()
 
         ag_notation += self.get_destination()
-
-        ag_notation += self.get_check()
 
         if self.piece == Piece.KING:
             if self.castle == Castle.OO:
                 ag_notation = 'O-O'
             if self.castle == Castle.OOO:
                 ag_notation = 'O-O-O'
+
+        ag_notation += self.get_check()
 
         return ag_notation
     

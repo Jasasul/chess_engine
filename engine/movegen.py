@@ -335,8 +335,14 @@ def generate_moves(position):
     return moves
 
 def legal_moves(position):
-    moves = [move for move in generate_moves(position) if is_legal(position, move)]
-    return moves
+    moves = generate_moves(position)
+    legal = []
+    if len(moves) > 0:
+        for move in moves:
+            if move.captured == Piece.KING: continue
+            if is_legal(position, move):
+                legal.append(move) 
+    return legal
 
 def in_check(position, color):
     # if the side's king is in check
@@ -345,3 +351,9 @@ def in_check(position, color):
         return is_attacked(position, hp.lsb(king), Color.BLACK)
     if color == Color.BLACK:
         return is_attacked(position, hp.lsb(king), Color.WHITE)
+
+def detect_checkmate(position):
+    pass
+
+def detect_draw(position):
+    pass

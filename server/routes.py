@@ -3,7 +3,7 @@ import random as rn
 import engine.helper as hp
 import engine.chessboard as cb
 import engine.movegen as mg
-from engine.constants import Piece
+from engine.constants import Piece, Color
 
 routes = Blueprint('routes', __name__)
 
@@ -18,6 +18,7 @@ def handle_request():
     board = cb.Chessboard()
     fen = request.get_data().decode()
     if hp.validate_fen(fen):
+        # if position is valid
         board.set_board(fen)
         legal = mg.legal_moves(board)
         # move generation
