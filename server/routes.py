@@ -3,6 +3,7 @@ import random as rn
 import engine.helper as hp
 import engine.chessboard as cb
 import engine.movegen as mg
+import engine.search as search
 from engine.constants import Piece, Color
 
 routes = Blueprint('routes', __name__)
@@ -20,11 +21,9 @@ def handle_request():
     if hp.validate_fen(fen):
         # if position is valid
         board.set_board(fen)
-        legal = mg.legal_moves(board)
-        # move generation
-        moves = [move.get_notation(legal) for move in legal]
-        if len(moves) > 0:
-            move = rn.choice(moves)
-            # sending move generated back to the GUI
-            return jsonify(move=move)
+        if board.turn == Color.WHITE:
+            best = search.minimax(board, 3, True, True)
+        else:
+            best = search.minimax(board, 3, False, True)
+        return jsonify(move=best)
     return jsonify(move='Invalid fen')

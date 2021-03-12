@@ -42,5 +42,7 @@ def get_score(position):
     material = get_piece_diff(position)
     placement = 0
     for piece in Piece:
-        placement += score_piece_placement(position, position.turn, piece)
+        white_placement = score_piece_placement(position, Color.WHITE, piece)
+        black_placement = score_piece_placement(position, Color.BLACK, piece)
+        placement += white_placement - black_placement
     return material + placement
