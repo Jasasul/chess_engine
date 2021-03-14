@@ -175,4 +175,7 @@ class Chessboard(object):
                 self.make_castle(move)
         self.bb_adjust()
         self.move_list.append(move)
+        self.halfmove += 1
+        if self.turn == Color.BLACK:
+            self.fullmove += 1
         self.turn ^= 1

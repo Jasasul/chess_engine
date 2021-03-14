@@ -106,6 +106,9 @@ class Move(object):
                 ag_notation = 'O-O'
             if self.castle == Castle.OOO:
                 ag_notation = 'O-O-O'
+        
+        if self.promo != None:
+            self.ag_notation += '=' + self.promo.get_char().upper()
 
         ag_notation += self.get_check()
 

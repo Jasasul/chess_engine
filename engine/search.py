@@ -7,6 +7,11 @@ def minimax(position, depth, is_maximizing, start=False):
     # finds best move
     if depth == 0: return ev.get_score(position)
 
+    if len(position.move_list) > 0:
+        king_in_check = position.move_list[-1].is_check
+    else:
+        king_in_check = False
+
     moves_scored = []
     scores = []
 
@@ -23,7 +28,11 @@ def minimax(position, depth, is_maximizing, start=False):
                 if score > max_score:
                     max_score = score
                 del new_pos
-        if start: return get_best(moves, scores, True)
+        if len(moves_scored) == 0 and not start:
+            if king_in_check:
+                return -49000
+            return 0
+        if start: return get_best(moves_scored, scores, True)
         return max_score
 
     else:
@@ -39,7 +48,11 @@ def minimax(position, depth, is_maximizing, start=False):
                 if score < min_score:
                     min_score = score
                 del new_pos
-        if start: return get_best(moves, scores, False)
+        if len(moves_scored) == 0 and not start:
+            if king_in_check:
+                return 49000
+            return 0
+        if start: return get_best(moves_scored, scores, False)
         return min_score
 
 def get_best(moves, scores, is_maximizing):
