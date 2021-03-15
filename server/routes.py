@@ -22,7 +22,7 @@ def handle_request():
         # if position is valid
         board.set_board(fen)
         if board.turn == Color.WHITE:
-            best = search.minimax(board, 3, True, True)
+            best = search.maxi(board, 3, True)
         else:
             best = search.minimax(board, 3, False, True)
         return jsonify(move=best)

@@ -335,6 +335,7 @@ def generate_moves(position):
     return moves
 
 def legal_moves(position):
+    # generates legal moves for a position
     moves = generate_moves(position)
     legal = []
     if len(moves) > 0:
@@ -351,9 +352,3 @@ def in_check(position, color):
         return is_attacked(position, hp.lsb(king), Color.BLACK)
     if color == Color.BLACK:
         return is_attacked(position, hp.lsb(king), Color.WHITE)
-
-def detect_checkmate(position):
-    pass
-
-def detect_draw(position):
-    pass

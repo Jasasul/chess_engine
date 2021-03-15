@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <!-- SOME CCS NEEDED FOR CHESSBOARD JS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='node_modules/@chrisoakman/chessboardjs/dist/chessboard-1.0.0.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
@@ -11,9 +12,13 @@
     {% block content %}
         
     {% endblock content %}
+    <!-- JQUERY -->
     <script src="{{ url_for('static', filename='node_modules/jquery/dist/jquery.min.js') }}"></script>
+    <!-- CHESSBOARDJS-->
     <script src="{{ url_for('static', filename='node_modules/@chrisoakman/chessboardjs/dist/chessboard-1.0.0.min.js') }}"></script>
+    <!-- CHESSJS -->
     <script src="{{ url_for('static', filename='node_modules/chess.js/chess.js') }}"></script>
+    <!-- MAIN SCRIPT FILE -->
     <script src="{{ url_for('static', filename='js/index.js') }}"></script>
 </body>
 </html>

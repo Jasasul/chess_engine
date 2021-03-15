@@ -3,6 +3,7 @@
 <div class="content">
     <div class="position">
         <div class="side_div">
+            <!-- BUTTONS THAT ALLOW USER TO CHANGE FEN STRING -->
             <button id="w" class="btn fen-btn btn-side active-side">White</button>
             <button id="b" class="btn fen-btn btn-side">Black</button>
         </div>
@@ -15,15 +16,18 @@
             <button id="bq" class="btn fen-btn btn-castle">BQueenside</button>
         </div>
         <div class="side_div side_inp">
+            <!-- Allows to choose en passant square -->
             <label class="ep-label" for="enpassant">En passant</label><br>
             <input id="ep-input" class="ep-input" type="text" maxlength="2" name='enpassant'>
         </div>
     </div>
     <div class="board_div">
+        <!-- Main chessboard div -->
         <div id="board" style="width: 600px"></div>
         <input type="text" name="fen" id="fen">
     </div>
     <div class="btns">
+        <!-- Chessboard event buttons -->
         <button class="btn btn-start">Start Position</button>
         <button class="btn btn-clear">Clear Board</button>
         <button class="btn btn-move">Find Move</button>

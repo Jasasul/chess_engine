@@ -1,5 +1,6 @@
-from engine.lookup_tables import kindergarten_multipication
 import numpy as np
+
+# BONUS POINTS FOR ON WHAT SQUARE THE PIECE IS
 
 PAWN =  [
     0,  0,  0,  0,  0,  0,  0,  0,
