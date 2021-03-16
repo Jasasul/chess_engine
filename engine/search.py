@@ -77,7 +77,7 @@ def minimax(position, depth, is_maximizing, start=False):
         # else: return lowest score (best for black)
         return min_score
 
-def maxi(position, depth, is_start=False):
+def maxi(position, depth, alpha, beta, is_start=False):
     # white - best move = move with the largest score
     if depth == 0: return ev.get_score(position)
 
@@ -94,12 +94,15 @@ def maxi(position, depth, is_start=False):
             new_pos = copy.deepcopy(position)
             new_pos.make_move(move)
             # evaluate for child position
-            score = mini(new_pos, depth - 1)
+            score = mini(new_pos, depth - 1, alpha, beta)
             moves_scored.append(move)
             scores.append(score)
             # if current move is better
             max_score = max(max_score, score)
             del new_pos
+            alpha = max(alpha, score)
+            if beta <= alpha:
+                break
     # if no moves
     if len(moves_scored) == 0 and not is_start:
         return game_end_score(position)
@@ -108,7 +111,7 @@ def maxi(position, depth, is_start=False):
     # else return best move
     return max_score
 
-def mini(position, depth, is_start=False):
+def mini(position, depth, alpha, beta, is_start=False):
     # black - best move = move with the smallest score
     if depth == 0: return ev.get_score(position)
     
@@ -123,12 +126,15 @@ def mini(position, depth, is_start=False):
             # only legal
             new_pos = copy.deepcopy(position)
             new_pos.make_move(move)
-            score = maxi(new_pos, depth - 1)
+            score = maxi(new_pos, depth - 1, alpha, beta)
             moves_scored.append(move)
             scores.append(score)
             # black is minimizing (best negative score)
-            max_score = min(max_score, score)
+            min_score = min(beta, score)
             del new_pos
+            beta = min(beta, score)
+            if beta <= alpha:
+                break
     # checkmate or check
     if len(moves_scored) == 0 and not is_start:
         return game_end_score(position)
@@ -137,11 +143,12 @@ def mini(position, depth, is_start=False):
     # else: return lowest score (best for black)
     return min_score
 
+
 def king_in_check(position):
     # return if king of the side to move is in check
     if len(position.move_list) == 0:
         return False
-    return position.move_list.is_check
+    return position.move_list[0].is_check
 
 def game_end_score(position):
     # detects checkmates and draws

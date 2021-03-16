@@ -1,5 +1,4 @@
 from server import create_app
-import engine
 
 app = create_app()
 

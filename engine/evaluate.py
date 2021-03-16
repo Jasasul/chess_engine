@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, IntEnum
 import numpy as np
 from numpy.core.numeric import binary_repr
 
@@ -7,8 +7,10 @@ import engine.lookup_tables as tb
 import engine.helper as hp
 import engine.square_tables as sqtb
 from engine.constants import Piece, Color
+from engine.square import Square
 
-class Score(Enum):
+class Score(IntEnum):
+    # values of each piece in centipawns (1/100 of a pawn)
     PAWN = np.int32(100)
     KNIGHT = np.int32(320)
     BISHOP = np.int32(330)
@@ -18,11 +20,11 @@ class Score(Enum):
 
 def get_piece_diff(position):
     # gets a points for pieces on the board
+    values = [100, 320, 330, 500, 900, 20000]
     score = 0
     for piece in Piece:
-        white = hp.bit_count(position.pieces[Color.WHITE][piece])
-        black = hp.bit_count(position.pieces[Color.BLACK][piece])
-        score += white - black
+        score += hp.bit_count(position.pieces[Color.WHITE][piece]) * values[piece]
+        score -= hp.bit_count(position.pieces[Color.BLACK][piece]) * values[piece]
     return score
 
 def score_piece_placement(position, color, piece):
@@ -30,11 +32,15 @@ def score_piece_placement(position, color, piece):
     bb = position.pieces[color][piece]
     score = 0
     for i in range(64):
-        if bb >> np.uint8(i) & np.uint8(1):
+        if (bb >> np.uint8(i)) & np.uint8(1):
+            rank = i // 8
+            file = i % 8
             if color == Color.WHITE:
-                score += sqtb.BOARD_SCORE[piece][63-i]
-            if color == Color.BLACK:
-                score += sqtb.BOARD_SCORE[piece][i]
+                square = rank*8 + file
+                score += sqtb.BOARD_SCORE[piece][63-square]
+            else:
+                square = (7-rank)*8 + (file)
+                score -= sqtb.BOARD_SCORE[piece][63-square]
     return score
 
 def get_score(position):
@@ -42,7 +48,6 @@ def get_score(position):
     material = get_piece_diff(position)
     placement = 0
     for piece in Piece:
-        white_placement = score_piece_placement(position, Color.WHITE, piece)
-        black_placement = score_piece_placement(position, Color.BLACK, piece)
-        placement += white_placement - black_placement
+        placement += score_piece_placement(position, Color.WHITE, piece)
+        placement += score_piece_placement(position, Color.BLACK, piece)
     return material + placement

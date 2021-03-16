@@ -1,8 +1,6 @@
 import numpy as np
-from engine.constants import Rank, File, Color
+from engine.constants import File, Color
 from engine.square import Square
-import engine.helper as hp
-
 
 def compute_diag_mask(i):
     # finds on which diagonal a square is
