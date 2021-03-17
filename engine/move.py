@@ -1,8 +1,6 @@
-from numpy import get_include
 from engine.square import Square
 from engine.constants import File, Rank, Piece, Castle
 import engine.helper as hp
-import engine.movegen as mg
 import engine.lookup_tables as tb
 
 class Move(object):
@@ -72,35 +70,36 @@ class Move(object):
         # creates a move notation in standard format
         same_dest = []
         ag_notation = ''
-
+        # N - knight B - bishop, R - rook, Q - queen, K - king, a pawn does not have any character
         ag_notation += self.get_piece()
 
         for move in move_list:
-            # distinguishing moves when 2 pieces of the same type move to the same square
+            # finding moves where 2 pieces of the same type move to the same square
             if move == self: continue
             if move.piece == Piece.PAWN: continue
             if move.dest == self.dest and move.piece == self.piece:
                 same_dest.append(move)
-        
+        # resolving ambiguity
         file = self.get_file()
         rank = self.get_rank()
-
         src_sq = ''
         if len(same_dest) > 1:
+            # if more than one move, file or rank is not enough
             src_sq = f'{file}{rank}'
         if len(same_dest) == 1:
+            # file first, and if the pieces move from the same file, we add rank
             move = same_dest[0]
             move_file = move.get_file()
             move_rank = move.get_rank()
             if move_file != file: src_sq = file
             elif move_rank != rank: src_sq = rank
-        
+        # appending after piece notation
         ag_notation += src_sq
-
+        # x is for capture if the move is one
         ag_notation += self.get_capture()
-
+        # destination is last
         ag_notation += self.get_destination()
-
+        # special cases - Castle king side - O-O, Castle queen side - O-O-O
         if self.piece == Piece.KING:
             if self.castle == Castle.OO:
                 ag_notation = 'O-O'
@@ -108,11 +107,24 @@ class Move(object):
                 ag_notation = 'O-O-O'
         
         if self.promo != None:
+            # format of promotion is destination + = + piece pawn is promoted to
             self.ag_notation += '=' + self.promo.get_char().upper()
-
+        # + for check at the end
         ag_notation += self.get_check()
 
         return ag_notation
+    
+    def is_legal(self, position):
+        # returns if the move is legal in given position
+        new_position = position.copy_make(self)
+        # checking if we're in check
+        check = new_position.king_in_check(new_position.turn ^ 1)
+        if not check:
+            if new_position.king_in_check(new_position.turn):
+                # we can also check whether the move puts opponent king in check
+                self.is_check = True
+        
+        return not check
     
     def __repr__(self):
         # human readable format of a move

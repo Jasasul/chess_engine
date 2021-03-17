@@ -4,79 +4,6 @@ import engine.movegen as mg
 import copy
 from engine.constants import Color
 
-def minimax(position, depth, is_maximizing, start=False):
-    # finds best move
-    if depth == 0: return ev.get_score(position)
-
-    # king is in check if last move was in check
-    if len(position.move_list) > 0:
-        king_in_check = position.move_list[-1].is_check
-    else:
-        king_in_check = False
-
-    # where are moves for the first positin stored and their scores
-    moves_scored = []
-    scores = []
-
-    # for white
-    if is_maximizing:
-        max_score = -float('inf')
-        # all moves
-        moves = mg.generate_moves(position)
-        for move in moves:
-            # only if legal
-            if mg.is_legal(position, move):
-                # make move
-                new_pos = copy.deepcopy(position)
-                new_pos.make_move(move)
-                # evaluate for child position
-                score = minimax(new_pos, depth - 1, False)
-                moves_scored.append(move)
-                scores.append(score)
-                # if current move is better
-                max_score = max(max_score, score)
-                del new_pos
-        # if no moves
-        if len(moves_scored) == 0 and not start:
-            if king_in_check:
-                # checkmate
-                return -49000
-            # draw
-            return 0
-        for i in range(len(moves_scored)):
-            if move.captured != None:
-                print(scores[i])
-        # if root node: return best move
-        if start: return get_best(moves_scored, scores, True)
-        # else return best move
-        return max_score
-
-    # for black
-    else:
-        min_score = float('inf')
-        moves = mg.generate_moves(position)
-        for move in moves:
-            # moves
-            if mg.is_legal(position, move):
-                # only legal
-                new_pos = copy.deepcopy(position)
-                new_pos.make_move(move)
-                score = minimax(new_pos, depth - 1, True)
-                moves_scored.append(move)
-                scores.append(score)
-                # black is minimizing (best negative score)
-                max_score = min(min_score, score)
-                del new_pos
-        # checkmate or check
-        if len(moves_scored) == 0 and not start:
-            if king_in_check:
-                return 49000
-            return 0
-        # if root node: return best move
-        if start: return get_best(moves_scored, scores, False)
-        # else: return lowest score (best for black)
-        return min_score
-
 def maxi(position, depth, alpha, beta, is_start=False):
     # white - best move = move with the largest score
     if depth == 0: return ev.get_score(position)
@@ -89,17 +16,16 @@ def maxi(position, depth, alpha, beta, is_start=False):
     moves = mg.generate_moves(position)
     for move in moves:
         # only if legal
-        if mg.is_legal(position, move):
+        if move.is_legal(position):
             # make move
-            new_pos = copy.deepcopy(position)
-            new_pos.make_move(move)
+            new_position = position.copy_make(move)
             # evaluate for child position
-            score = mini(new_pos, depth - 1, alpha, beta)
+            score = mini(new_position, depth - 1, alpha, beta)
             moves_scored.append(move)
             scores.append(score)
             # if current move is better
             max_score = max(max_score, score)
-            del new_pos
+            del new_position
             alpha = max(alpha, score)
             if beta <= alpha:
                 break
@@ -122,16 +48,15 @@ def mini(position, depth, alpha, beta, is_start=False):
     moves = mg.generate_moves(position)
     for move in moves:
         # moves
-        if mg.is_legal(position, move):
+        if move.is_legal(position):
             # only legal
-            new_pos = copy.deepcopy(position)
-            new_pos.make_move(move)
-            score = maxi(new_pos, depth - 1, alpha, beta)
+            new_position = position.copy_make(move)
+            score = maxi(new_position, depth - 1, alpha, beta)
             moves_scored.append(move)
             scores.append(score)
             # black is minimizing (best negative score)
             min_score = min(beta, score)
-            del new_pos
+            del new_position
             beta = min(beta, score)
             if beta <= alpha:
                 break

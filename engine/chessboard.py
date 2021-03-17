@@ -1,25 +1,25 @@
 import numpy as np
+import copy
 import engine.helper as hp
-import engine.lookup_tables as tb
-import engine.square_tables as sqtb
-from engine.constants import Color, Rank, File, Piece, Castle
+import engine.movegen as mg
+from engine.constants import Color, Piece, Castle
 from engine.square import Square
 
 
 class Chessboard(object):
     def __init__(self):
-        self.piece_chars = ['P', 'N', 'B', 'R', 'Q', 'K']
-        self.castle_chars = ['K', 'Q', 'k', 'q']
-        self.pieces = np.zeros((2, 6), dtype=np.uint64)
-        self.colors = np.zeros(2, dtype=np.uint64)
-        self.occupancy = np.uint64(0)
-        self.turn = np.uint64(0)
-        self.castle = np.zeros((2, 2), dtype=np.uint64)
-        self.ep_square = None
-        self.halfmove = np.uint64(0)
-        self.fullmove = np.uint64(0)
-        self.fen = None
-        self.move_list = []
+        self.piece_chars = ['P', 'N', 'B', 'R', 'Q', 'K'] # for fen
+        self.castle_chars = ['K', 'Q', 'k', 'q'] # for fen
+        self.pieces = np.zeros((2, 6), dtype=np.uint64) # one for each piece type 2 colors
+        self.colors = np.zeros(2, dtype=np.uint64) # total pieces for 2 colors
+        self.occupancy = np.uint64(0) # total pieces on board
+        self.turn = np.uint64(0) # white or black
+        self.castle = np.zeros((2, 2), dtype=np.uint64) # kindside and queenside for white and black
+        self.ep_square = None # en passant target square
+        self.halfmove = np.uint64(0) # halfmove clock
+        self.fullmove = np.uint64(0) # fullmove clock
+        self.fen = None # position in string format
+        self.move_list = [] # what moves has been played up to now
 
     def reset(self):
         # resets all properties of the position obj
@@ -111,11 +111,15 @@ class Chessboard(object):
         self.fen = fen
 
         fen_parts = fen.split()
-
+        # piece placement
         self.set_pieces(fen_parts[0])
+        # side to move
         self.set_side(fen_parts[1])
+        # castling rights and en passant
         self.set_special(fen_parts[2], fen_parts[3])
+        # halfmoves and fullmoves
         self.set_move_clock(fen_parts[4], fen_parts[5])
+        # updates helper bitboards
         self.bb_adjust()
     
     
@@ -134,6 +138,7 @@ class Chessboard(object):
         h1 = Square(7).to_bitboard()
         h8 = Square(63).to_bitboard()
         if self.turn == Color.WHITE:
+            # moving rook for white
             if move.castle == Castle.OOO:
                 self.pieces[self.turn][Piece.ROOK] ^= a1
                 self.pieces[self.turn][Piece.ROOK] |= a1 << np.uint(3)
@@ -141,6 +146,7 @@ class Chessboard(object):
                 self.pieces[self.turn][Piece.ROOK] ^= h1
                 self.pieces[self.turn][Piece.ROOK] |= h1 >> np.uint(2)
         if self.turn == Color.BLACK:
+            # moving rooks for black
             if move.castle == Castle.OOO:
                 self.pieces[self.turn][Piece.ROOK] ^= a8
                 self.pieces[self.turn][Piece.ROOK] |= a8 << np.uint(3)
@@ -175,7 +181,21 @@ class Chessboard(object):
                 self.make_castle(move)
         self.bb_adjust()
         self.move_list.append(move)
+        # move clock - halfmove is every move which is not a capture or pawn move
         self.halfmove += 1
         if self.turn == Color.BLACK:
+            # one fullmove is after both sides moved - 1 fullmove = 2 halfmoves
             self.fullmove += 1
+        # opponents turn
         self.turn ^= 1
+    
+    def copy_make(self, move):
+        # copies itself and makes a move in the copy
+        new_position = copy.deepcopy(self)
+        new_position.make_move(move)
+        return new_position
+    
+    def king_in_check(self, color):
+        # returns if a given color's king is in check in current position
+        king = self.pieces[color][Piece.KING]
+        return mg.is_attacked(self, hp.lsb(king), color ^ 1)

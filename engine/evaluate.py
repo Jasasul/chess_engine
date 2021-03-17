@@ -1,29 +1,16 @@
-from enum import Enum, IntEnum
 import numpy as np
-from numpy.core.numeric import binary_repr
-
-import engine.chessboard as cb
-import engine.lookup_tables as tb
 import engine.helper as hp
 import engine.square_tables as sqtb
 from engine.constants import Piece, Color
-from engine.square import Square
-
-class Score(IntEnum):
-    # values of each piece in centipawns (1/100 of a pawn)
-    PAWN = np.int32(100)
-    KNIGHT = np.int32(320)
-    BISHOP = np.int32(330)
-    ROOK = np.int32(500)
-    QUEEN = np.int32(900)
-    KING = np.int32(20000)
 
 def get_piece_diff(position):
     # gets a points for pieces on the board
-    values = [100, 320, 330, 500, 900, 20000]
+    values = [100, 320, 330, 500, 900, 20000] # P N B R Q K in centipawns
     score = 0
     for piece in Piece:
+        # white has positive values
         score += hp.bit_count(position.pieces[Color.WHITE][piece]) * values[piece]
+        # black negative
         score -= hp.bit_count(position.pieces[Color.BLACK][piece]) * values[piece]
     return score
 
@@ -33,12 +20,15 @@ def score_piece_placement(position, color, piece):
     score = 0
     for i in range(64):
         if (bb >> np.uint8(i)) & np.uint8(1):
+            # there is a piece
             rank = i // 8
             file = i % 8
             if color == Color.WHITE:
+                # score for white
                 square = rank*8 + file
                 score += sqtb.BOARD_SCORE[piece][63-square]
             else:
+                # mirrored for black
                 square = (7-rank)*8 + (file)
                 score -= sqtb.BOARD_SCORE[piece][63-square]
     return score
@@ -48,6 +38,8 @@ def get_score(position):
     material = get_piece_diff(position)
     placement = 0
     for piece in Piece:
+        # white gets positive score
         placement += score_piece_placement(position, Color.WHITE, piece)
+        # black negative
         placement += score_piece_placement(position, Color.BLACK, piece)
     return material + placement

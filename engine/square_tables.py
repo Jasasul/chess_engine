@@ -79,6 +79,7 @@ KING_END = [
     -50,-30,-30,-30,-30,-30,-30,-50
 ]
 
+# creating single array for portability
 BOARD_SCORE = np.array([
     np.array(PAWN),
     np.array(KNIGHT),

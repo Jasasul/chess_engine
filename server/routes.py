@@ -21,11 +21,14 @@ def handle_request():
     if hp.validate_fen(fen):
         # if position is valid
         board.set_board(fen)
+        # minimax search
         alpha = -float('inf')
         beta = float('inf')
         if board.turn == Color.WHITE:
             best = search.maxi(board, 3, alpha, beta, True)
         else:
             best = search.mini(board, 3, alpha, beta, True)
+        # returns best move in json format
         return jsonify(move=best)
+    # invalid position
     return jsonify(move='Invalid fen')

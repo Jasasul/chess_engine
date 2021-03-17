@@ -65,11 +65,13 @@ $('.btn-move').on('click', function() {
   fen1 = fen1.join(' ')
   // only send the position to the server if the game is not over
   fen2 = fen2.join(' ')
+  // white not checkmated
   game.load(fen1)
   if (game.game_over()) {
     alert('Game ended')
     return
   }
+  // black not checkmated
   game.load(fen2)
   if (game.game_over()) {
     alert('Game ended')
@@ -135,7 +137,7 @@ function get_castle() {
 }
 
 function get_ep() {
-  // sets up a special en passant target square if a valid square available
+  // sets up a special en passant target square if a valid square is entered
   validFiles = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
   validRanks = ['1', '2', '3', '4', '5', '6', '7', '8']
   square = ''

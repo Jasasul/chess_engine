@@ -83,7 +83,7 @@ MASK_64 = int('1'*64, 2)
 
 
 def kindergarten_multipication(x, y):
-    # 128 bit is too large, need to mask it back down to 64 bit
+    # 128 bit is too large to multiply, we need to mask it back down to 64 bit
     return np.uint64((int(x) * int(y)) & MASK_64)
 
 
@@ -92,8 +92,8 @@ def mask_pawn_attacks(color, i):
     attacks = np.uint64(0)
     sq = Square(i)
 
-    pawn = sq.to_bitboard()
-
+    pawn = sq.to_bitboard() # pawn square
+    # some bit shifting to find attacks
     if color == Color.WHITE:
         # black is up
         ne = (pawn & ~FILES[File.H]) << np.uint(9)
@@ -112,8 +112,8 @@ def mask_knight_attacks(i):
     attacks = np.uint64(0)
     sq = Square(i)
 
-    knight = sq.to_bitboard()
-
+    knight = sq.to_bitboard() # where knight is
+    # some bit shifting to find attacks, but same for both sides
     nnw = (knight & ~FILES[File.A]) << np.uint64(15)
     nne = (knight & ~FILES[File.H]) << np.uint64(17)
     nww = (knight & ~(FILES[File.A] | FILES[File.B])) << np.uint64(6)
@@ -133,8 +133,9 @@ def mask_king_attacks(i):
     attacks = np.uint64(0)
     sq = Square(i)
 
-    king = sq.to_bitboard()
+    king = sq.to_bitboard() # where king is
 
+    # some bit shifting to find attacks, but same for both sides
     n = king << np.uint64(8)
     s = king >> np.uint64(8)
     w = (king & ~FILES[File.A]) >> np.uint64(1)

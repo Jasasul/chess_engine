@@ -60,7 +60,7 @@ def gen_single_push(position, src):
         single_push = src << np.uint64(8)
     elif position.turn == Color.BLACK:
         single_push = src >> np.uint64(8)
-    
+    # checking if blocked
     if single_push & ~position.occupancy:
         move.src = src
         move.dest = single_push
@@ -75,7 +75,7 @@ def gen_double_push(position, src):
         double_push = src << np.uint64(16)
     elif position.turn == Color.BLACK:
         double_push = src >> np.uint64(16)
-    
+    # checking if blocked
     if not src & tb.RANKS[(position.turn*5) + 1]:
         double_push = np.uint64(0)
     
@@ -91,16 +91,7 @@ def gen_pawn_moves(position, src):
     moves = []
     single = gen_single_push(position, src)
     if single.is_valid():
-        # generating under promo moves if the move is a promo
-        if single.promo != None:
-            for piece in Piece:
-                if piece == Piece.PAWN:
-                    continue
-                if piece == Piece.QUEEN:
-                    break
-                promo_move = copy.deepcopy(single)
-                promo_move.promo = piece
-                moves.append(promo_move)
+        # generating under promo moves if the move is a promo; underpromo - promo to N B R
         moves.append(single)
         # checking double push
         double = gen_double_push(position, src)
@@ -122,7 +113,7 @@ def gen_pawn_moves(position, src):
     return moves
 
 def gen_en_passant(position):
-    # if there is an en passant target generate ep moves
+    # if there is an en passant target generate ep captures
     moves = []
     if position.ep_square != None:
         possible_squares = get_pawn_attacks(
@@ -160,7 +151,7 @@ def gen_rook_moves(position, src):
     moves = []
     attacks = get_rook_attacks(hp.lsb(src), position.occupancy)
     moves += gen_moves(position, Piece.ROOK, src, attacks)
-    
+    # rook original squares
     a1 = Square(0).to_bitboard()
     a8 = Square(56).to_bitboard()
     h1 = Square(7).to_bitboard()
@@ -168,7 +159,7 @@ def gen_rook_moves(position, src):
     # castling availability
     queenside = position.castle[position.turn][Castle.OOO]
     kingside = position.castle[position.turn][Castle.OO]
-    # if rook moves from its original square that sides castle is not available anymore
+    # if rook moves from its original square castling to that side is no longer available
     for move in moves:
         if position.turn == Color.WHITE:
             if (move.src & a1) and queenside != 0: move.castle = Castle.OOO
@@ -251,7 +242,7 @@ def check_capture(position, move):
            move.captured = piece
 
 def gen_moves(position, piece, src, attacks):
-    # generates move from attack set
+    # generates move class instance from attack set
     moves = []
     while attacks:
         attack = Square(hp.lsb(attacks)).to_bitboard()
@@ -279,18 +270,6 @@ def is_attacked(position, i, color):
         return True
 
     return False
-
-def is_legal(position, move):
-    # move is illegal if it leaves king in check
-    test_board = copy.deepcopy(position)
-    test_board.make_move(move)
-    # it's now opponent's turn, we must check for our side
-    attacked = in_check(test_board, test_board.turn ^ 1)
-    if attacked == False:
-        if in_check(test_board, test_board.turn):
-            move.is_check = True
-
-    return not attacked
 
 def generate_moves(position):
     # generates moves for all pieces on all squares for a side to move
@@ -323,32 +302,13 @@ def generate_moves(position):
             if move.dest & tb.RANKS[7 - position.turn*7]:
                 move.promo = Piece.QUEEN
                 for piece in Piece:
-                    if piece == Piece.PAWN: continue
-                    if piece == Piece.QUEEN: break
-                    promo_copy = copy.deepcopy(move)
-                    promo_copy.promo = piece
+                    if piece == Piece.PAWN: continue # a pawn cannot promote to a pawn
+                    if piece == Piece.QUEEN: break # the original promo move is a queen promo
+                    promo_copy = copy.deepcopy(move) # copying the move
+                    promo_copy.promo = piece # new piece
                     under_promos.append(promo_copy)
     moves += under_promos
     # generating castle moves
     moves += [move for move in check_castle(position) if move.is_valid()]
 
     return moves
-
-def legal_moves(position):
-    # generates legal moves for a position
-    moves = generate_moves(position)
-    legal = []
-    if len(moves) > 0:
-        for move in moves:
-            if move.captured == Piece.KING: continue
-            if is_legal(position, move):
-                legal.append(move) 
-    return legal
-
-def in_check(position, color):
-    # if the side's king is in check
-    king = position.pieces[color][Piece.KING]
-    if color == Color.WHITE:
-        return is_attacked(position, hp.lsb(king), Color.BLACK)
-    if color == Color.BLACK:
-        return is_attacked(position, hp.lsb(king), Color.WHITE)

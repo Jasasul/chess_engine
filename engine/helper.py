@@ -38,9 +38,9 @@ def bit_count(bb):
 def validate_fen(fen):
     # validates a fen string received from the client
     valid = True
-    kings = 0
-    pieces = 0
-    squares = 0
+    kings = 0 # num of kings
+    pieces = 0 # num of pieces
+    squares = 0 # num of squares
 
     parts = fen.split()
     # format
@@ -61,24 +61,25 @@ def validate_fen(fen):
                     squares += 1
                     if char in ['k', 'K']:
                         kings += 1
-            # 64 squares, not empty and max 1 king per side
-            if squares != 64: valid = False
-            if pieces == 0: valid = False
-            if kings > 2 or kings == 0: valid = False
+
+            if squares != 64: valid = False # 64 squares
+            if pieces == 0: valid = False # at least some pieces
+            if kings != 2: valid = False # 2 kings - one per side
+
             # valid side to move
-            if parts[1] not in ['w', 'b']: valid = False
+            if parts[1] not in ['w', 'b']: valid = False 
             # valid castling
             for char in parts[2]:
                 if char not in ['K', 'k', 'Q', 'q', '-']: valid = False
             # valid en passant square - no en passant square is notated as '-'
             if len(parts[3]) == 1 and parts[3] != '-': valid = False
-            if len(parts[3]) > 2 and len(parts[3]) < 1:
+            if len(parts[3]) > 2 and len(parts[3]) < 1: # not adequate length
                 valid = False
             if len(parts[3]) == 2:
-                if parts[3][0] not in ['a' 'b', 'c' , 'd', 'e', 'f' ,'g', 'h']:
+                if parts[3][0] not in ['a' 'b', 'c' , 'd', 'e', 'f' ,'g', 'h']: # invalid file
                     valid = False
                 else:
-                    if parts[3][1] not in ['1', '2', '3', '4', '5', '6', '7', '8']:
+                    if parts[3][1] not in ['1', '2', '3', '4', '5', '6', '7', '8']: # invalid rank
                         valid = False
 
             # move counters are non-negative integers and fullmove clock must be lower than halfmove
