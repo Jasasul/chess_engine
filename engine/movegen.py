@@ -3,7 +3,7 @@ import numpy as np
 import engine.lookup_tables as tb
 import engine.helper as hp
 import engine.chessboard as cb
-from engine.constants import Color, Piece, Rank, Castle
+from engine.constants import Color, Piece, Castle
 from engine.square import Square
 from engine.move import Move
 
@@ -196,7 +196,7 @@ def check_castle(position):
     # can actually castle
     if not (queenside or kingside): return moves
     # king must not be in check
-    if in_check(position, position.turn): return moves
+    if position.king_in_check(position.turn): return moves
     # king is not on his original square
     if position.turn == Color.WHITE and king != Square(4).to_bitboard():
         return moves
@@ -312,3 +312,12 @@ def generate_moves(position):
     moves += [move for move in check_castle(position) if move.is_valid()]
 
     return moves
+
+def get_legal_moves(position):
+    # return only legal moves
+    legal_moves = []
+    for move in generate_moves(position):
+        new_position = position.copy_make(move)
+        if not new_position.king_in_check(new_position.turn ^ 1):
+            legal_moves.append(move)
+    return legal_moves

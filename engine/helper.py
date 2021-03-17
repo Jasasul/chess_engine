@@ -39,6 +39,8 @@ def validate_fen(fen):
     # validates a fen string received from the client
     valid = True
     kings = 0 # num of kings
+    w_king = 0
+    b_king = 0
     pieces = 0 # num of pieces
     squares = 0 # num of squares
 
@@ -59,12 +61,15 @@ def validate_fen(fen):
                 if char.lower() in ['p', 'n', 'b', 'r', 'q' , 'k']:
                     pieces += 1
                     squares += 1
-                    if char in ['k', 'K']:
-                        kings += 1
+                    if char == 'K':
+                        w_king += 1
+                    if char == 'k':
+                        b_king += 1
 
             if squares != 64: valid = False # 64 squares
             if pieces == 0: valid = False # at least some pieces
-            if kings != 2: valid = False # 2 kings - one per side
+            if w_king != 1 or b_king != 1:
+                valid = False
 
             # valid side to move
             if parts[1] not in ['w', 'b']: valid = False 
@@ -86,6 +91,5 @@ def validate_fen(fen):
             if int(parts[4]) < 0: valid = False
             if int(parts[4]) > int(parts[5]): valid = False
             if int(parts[5]) < 0: valid = False
-
     
     return valid

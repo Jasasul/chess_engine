@@ -87,7 +87,7 @@ class Chessboard(object):
                 self.castle[Color.BLACK][Castle.OOO] = 1
         # en passant target square if any
         if ep_fen != '-':
-            self.ep_square = Square(Square.get_index(ep_fen)).to_bitboard()
+            self.ep_square = Square(Square.from_str(ep_fen)).to_bitboard()
     
     def set_move_clock(self, half_fen, full_fen):
         # sets halfmove and fullmove clock
@@ -199,3 +199,26 @@ class Chessboard(object):
         # returns if a given color's king is in check in current position
         king = self.pieces[color][Piece.KING]
         return mg.is_attacked(self, hp.lsb(king), color ^ 1)
+
+    def is_legal(self):
+        if self.king_in_check(self.turn ^ 1):
+            return False
+        return True
+    
+    def get_game_status(self):
+        # if game ended, there is no point in searching
+        test_board = copy.deepcopy(self)
+        legal_moves = mg.get_legal_moves(test_board)
+        # Checkmate - no moves and check; Draw - no moves and no check
+        # we have to check for both sides
+        if len(legal_moves) == 0:
+            if test_board.king_in_check(test_board.turn):
+                return 'Checkmate'
+            return 'Draw'
+        test_board.turn ^= 1 # other side
+        legal_moves = mg.get_legal_moves(test_board)
+        if len(legal_moves) == 0:
+            if test_board.king_in_check(test_board.turn):
+                return 'Checkmate'
+            return 'Draw'
+        return 'Valid'

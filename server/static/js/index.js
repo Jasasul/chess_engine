@@ -11,7 +11,7 @@ function generateMove(input_fen){
         success: function(data) {
           let move = data.move
           // position validation runs on the server
-          if (move == 'Invalid fen') {
+          if (['Checkmate', 'Draw', 'Invalid fen'].includes(move)) {
             alert(move)
           } else {
             // applies move is the move is valid
@@ -66,17 +66,6 @@ $('.btn-move').on('click', function() {
   // only send the position to the server if the game is not over
   fen2 = fen2.join(' ')
   // white not checkmated
-  game.load(fen1)
-  if (game.game_over()) {
-    alert('Game ended')
-    return
-  }
-  // black not checkmated
-  game.load(fen2)
-  if (game.game_over()) {
-    alert('Game ended')
-    return
-  }
   // sending position to the server
   game.load(fen)
   generateMove(fen)

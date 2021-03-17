@@ -16,11 +16,16 @@ def home():
 @routes.route('/handle_request', methods=['POST'])
 def handle_request():
     # initial position
-    board = cb.Chessboard()
     fen = request.get_data().decode()
     if hp.validate_fen(fen):
-        # if position is valid
+        # setting up board
+        board = cb.Chessboard()
         board.set_board(fen)
+        # we can still play
+        board_status = board.get_game_status()
+        # detecting game end
+        if board_status != 'Valid':
+            return jsonify(move=board_status)
         # minimax search
         alpha = -float('inf')
         beta = float('inf')

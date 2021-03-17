@@ -6,7 +6,7 @@ from engine.constants import Color
 
 def maxi(position, depth, alpha, beta, is_start=False):
     # white - best move = move with the largest score
-    if depth == 0: return ev.get_score(position)
+    if depth == 0: return quiescence(position, alpha, beta)
 
     moves_scored = []
     scores = []
@@ -16,9 +16,9 @@ def maxi(position, depth, alpha, beta, is_start=False):
     moves = mg.generate_moves(position)
     for move in moves:
         # only if legal
-        if move.is_legal(position):
+        new_position = position.copy_make(move)
+        if new_position.is_legal():
             # make move
-            new_position = position.copy_make(move)
             # evaluate for child position
             score = mini(new_position, depth - 1, alpha, beta)
             moves_scored.append(move)
@@ -39,7 +39,7 @@ def maxi(position, depth, alpha, beta, is_start=False):
 
 def mini(position, depth, alpha, beta, is_start=False):
     # black - best move = move with the smallest score
-    if depth == 0: return ev.get_score(position)
+    if depth == 0: return quiescence(position, alpha, beta)
     
     moves_scored = []
     scores = []
@@ -47,10 +47,9 @@ def mini(position, depth, alpha, beta, is_start=False):
     min_score = float('inf')
     moves = mg.generate_moves(position)
     for move in moves:
-        # moves
-        if move.is_legal(position):
+        new_position = position.copy_make(move)
+        if new_position.is_legal():
             # only legal
-            new_position = position.copy_make(move)
             score = maxi(new_position, depth - 1, alpha, beta)
             moves_scored.append(move)
             scores.append(score)
@@ -68,6 +67,28 @@ def mini(position, depth, alpha, beta, is_start=False):
     # else: return lowest score (best for black)
     return min_score
 
+def quiescence(position, alpha, beta):
+    score = ev.get_score(position)
+
+    if score >= beta: return beta
+    
+    alpha = max(alpha, score)
+
+    moves = [move for move in mg.generate_moves(position) if move.captured != None]
+
+    for move in moves:
+        new_position = position.copy_make(move)
+        if new_position.is_legal():
+            score = -quiescence(new_position, -beta, -alpha)
+        del new_position
+
+        if score >= beta:
+            return beta
+        
+        alpha = max(alpha, score)
+    
+    return alpha
+    
 
 def king_in_check(position):
     # return if king of the side to move is in check
@@ -77,7 +98,7 @@ def king_in_check(position):
 
 def game_end_score(position):
     # detects checkmates and draws
-    if king_in_check(position):
+    if position.king_in_check(position.turn):
         # current position is checkmate
         if position.turn == Color.WHITE:
             # checkmate score for each side

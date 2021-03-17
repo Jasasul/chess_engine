@@ -114,18 +114,6 @@ class Move(object):
 
         return ag_notation
     
-    def is_legal(self, position):
-        # returns if the move is legal in given position
-        new_position = position.copy_make(self)
-        # checking if we're in check
-        check = new_position.king_in_check(new_position.turn ^ 1)
-        if not check:
-            if new_position.king_in_check(new_position.turn):
-                # we can also check whether the move puts opponent king in check
-                self.is_check = True
-        
-        return not check
-    
     def __repr__(self):
         # human readable format of a move
         source = Square(hp.lsb(self.src)).get_char()
