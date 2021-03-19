@@ -17,6 +17,7 @@ class Move(object):
         self.captured = captured # capture piece (0-5) 
         self.new_ep = new_ep # stores new ep target square for opposite side if the move is double-push
         self.is_check = is_check
+        self.score = 0
     
     def is_valid(self):
         # a move has to have a source, a destination and a piece

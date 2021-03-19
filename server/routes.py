@@ -9,9 +9,13 @@ from engine.constants import Piece, Color
 routes = Blueprint('routes', __name__)
 
 @routes.route('/')
-@routes.route('/home')
-def home():
+@routes.route('/editor')
+def editor():
     return render_template('home.html')
+
+@routes.route('/menu')
+def menu():
+    return render_template('menu.html')
 
 @routes.route('/handle_request', methods=['POST'])
 def handle_request():

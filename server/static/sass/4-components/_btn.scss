@@ -16,11 +16,13 @@
 
     &:active {
         border: none;
+        background-color: #8f8f8f;
+        color: white;
     }
 }
 
 
-.active-side {
+.btn-toggled {
     background-color: #52504f;
     color: white;
 }
@@ -49,3 +51,29 @@
     text-align: center;
     border: 2px solid black;
 }
+
+.link-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 15rem;
+    height: 4rem;
+    margin-top: 3rem;
+    margin-left: 2rem;
+    margin-right: 2rem;
+    background-color: #e3e3e3;
+    border: 1px solid #52504f;
+    color: black;
+    font-size: 1.4rem;
+    text-decoration: none;
+
+    &:hover {
+        cursor: pointer;
+        background-color: #52504f;
+        color: white;
+    }
+
+    &:active {
+        border: none;
+    }
+}   

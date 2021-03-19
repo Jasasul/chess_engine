@@ -2,7 +2,7 @@ import copy
 import numpy as np
 import engine.lookup_tables as tb
 import engine.helper as hp
-import engine.chessboard as cb
+import engine.move_ordering as mord
 from engine.constants import Color, Piece, Castle
 from engine.square import Square
 from engine.move import Move
@@ -311,7 +311,12 @@ def generate_moves(position):
     # generating castle moves
     moves += [move for move in check_castle(position) if move.is_valid()]
 
-    return moves
+    # scoring a move to improve alpha beta pruning
+    for move in moves:
+        mord.score_move(move)
+    ordered = sorted(moves, key=lambda move: move.score, reverse=True)
+
+    return ordered
 
 def get_legal_moves(position):
     # return only legal moves
