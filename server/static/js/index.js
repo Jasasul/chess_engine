@@ -90,6 +90,10 @@ function movePiece(move) {
   $('.info-text').css('visibility', 'hidden')
 }
 
+function highlightSquare() {
+
+}
+
 function onDragStart (source, piece, position, orientation) {
   // do not pick up pieces if the game is over
   if (game.game_over()) return false
@@ -132,7 +136,7 @@ function onSnapEnd () {
   if (game.in_checkmate()) {
     alert('Checkmate')
   }
-  if (game.in_draw() || game.in_stalemate() || game.in_treefold_repetition()) {
+  if (game.in_draw() || game.in_stalemate() || game.in_threefold_repetition()) {
     alert('Draw')
   }
 
@@ -143,7 +147,7 @@ let config = {
   position: 'start',
   onDragStart: onDragStart,
   onDrop: onDrop,
-  onSnapEnd: onSnapEnd
+  onSnapEnd: onSnapEnd,
 }
 
 board = Chessboard('board', config)
