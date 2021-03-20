@@ -1,3 +1,4 @@
+from numpy import clongdouble
 from engine.square_tables import QUEEN
 import engine.evaluate as ev
 import engine.movegen as mg
@@ -34,6 +35,8 @@ def maxi(position, depth, alpha, beta, is_start=False):
             if beta <= alpha:
                 break
     # game end - checkmate or draw
+    if position.halfmove >= 50:
+        return 0
     if legal == 0 and not is_start:
         return game_end_score(position)
     # if root node: return best move
@@ -69,6 +72,8 @@ def mini(position, depth, alpha, beta, is_start=False):
             if beta <= alpha:
                 break
     # game end - checkmate or draw
+    if position.halfmove >= 50:
+        return 0
     if legal == 0 and not is_start:
         return game_end_score(position)
     # if root node: return best move

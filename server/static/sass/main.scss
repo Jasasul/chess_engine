@@ -1,9 +1,9 @@
-@import '2-base/reset';
-@import '2-base/typography';
+@import '1-base/reset';
+@import '1-base/typography';
 
-@import '3-layout/control-div';
+@import '2-layout/control-div';
 
-@import '4-components/btn';
-@import '4-components/square';
+@import '3-components/btn';
+@import '3-components/square';
 
-@import '5-pages/home';
+@import '4-pages/home';

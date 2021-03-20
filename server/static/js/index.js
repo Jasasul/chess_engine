@@ -49,11 +49,13 @@ $("#black").on('click', function() {
   }
   board = Chessboard('board', blackConfig)
   board.position(game.fen())
+  console.log(game.fen());
 })
 
 $('#start').on('click', function() {
   // activates bot and allows players to play
   if ($('#black').hasClass('btn-toggled')) {
+    $('.info-text').css('visibility', 'visible')
     generateMove(game.fen())
   }
   // toggle on
@@ -70,7 +72,8 @@ $('#start').on('click', function() {
 $('#reset').on('click', function() {
   // resets board to starting position
   board = Chessboard('board', config)
-  game.load(board.fen())
+  game.load('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
+  $('#start').removeClass('btn-toggled').text('Start Game')
 })
 
 $('#undo').on('click', function() {
@@ -84,7 +87,7 @@ function movePiece(move) {
   // engine plays move
   game.move(move)
   board.position(game.fen())
-  moveList.push(move)
+  $('.info-text').css('visibility', 'hidden')
 }
 
 function onDragStart (source, piece, position, orientation) {
@@ -118,6 +121,7 @@ function onDrop (source, target) {
   if (move === null) return 'snapback'
 
   // make random legal move for black
+  $('.info-text').css('visibility', 'visible')
   window.setTimeout(generateMove(game.fen()), 250)
 }
 
@@ -125,6 +129,13 @@ function onDrop (source, target) {
 // for castling, en passant, pawn promotion
 function onSnapEnd () {
   board.position(game.fen())
+  if (game.in_checkmate()) {
+    alert('Checkmate')
+  }
+  if (game.in_draw() || game.in_stalemate() || game.in_treefold_repetition()) {
+    alert('Draw')
+  }
+
 }
 
 let config = {
