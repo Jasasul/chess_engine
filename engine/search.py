@@ -1,8 +1,8 @@
-from numpy import clongdouble
-from engine.square_tables import QUEEN
+import numpy as np
 import engine.evaluate as ev
 import engine.movegen as mg
-from engine.constants import Color
+import engine.helper as hp
+from engine.constants import Color, Piece
 
 def maxi(position, depth, alpha, beta, is_start=False):
     # white - best move = move with the largest score
@@ -74,6 +74,8 @@ def mini(position, depth, alpha, beta, is_start=False):
     # game end - checkmate or draw
     if position.halfmove >= 50:
         return 0
+    if insufficient_material(position):
+        return 0
     if legal == 0 and not is_start:
         return game_end_score(position)
     # if root node: return best move
@@ -97,6 +99,50 @@ def game_end_score(position):
         return 49000
     # draw
     return 0
+
+def insufficient_material(position):
+    # returns True if there is not enough material to deliver a checkmate
+    no_heavy = False
+    no_pawns = False
+    # all 12 bitboards for combining them
+    wp = position.pieces[Color.WHITE][Piece.PAWN]
+    wn = position.pieces[Color.WHITE][Piece.KNIGHT]
+    wb = position.pieces[Color.WHITE][Piece.BISHOP]
+    wr = position.pieces[Color.WHITE][Piece.ROOK]
+    wq = position.pieces[Color.WHITE][Piece.QUEEN]
+    wk = position.pieces[Color.WHITE][Piece.KING]
+
+    bp = position.pieces[Color.BLACK][Piece.PAWN]
+    bn = position.pieces[Color.BLACK][Piece.KNIGHT]
+    bb = position.pieces[Color.BLACK][Piece.BISHOP]
+    br = position.pieces[Color.BLACK][Piece.ROOK]
+    bq = position.pieces[Color.BLACK][Piece.QUEEN]
+    bk = position.pieces[Color.BLACK][Piece.KING]
+    # you can deliver a checkmate with a single rook or queen, there can't be any
+    if wq == 0 and bq == 0 and wr == 0 and br == 0:
+        no_heavy = True
+    # pawns can promote into the heavy pieces (rook and queen)
+    if wp == 0 and bp == 0:
+        no_pawns = True
+    # only light pieces (knight, bishop)   
+    if no_heavy and no_pawns:
+        # only kings
+        if wn == 0 and bn == 0 and wb == 0 and bb == 0:
+            return True
+        # white king and white knight vs black king
+        if hp.bit_count(wn) == 1 and wb == 0 and bn == 0 and bb == 0:
+            return True
+        # black king and black knight vs white king
+        if hp.bit_count(bn) == 1 and bb == 0 and wn == 0 and wb == 0:
+            return True
+        # white king and white bishop vs black king
+        if wn == 0 and hp.bit_count(wb) == 1 and bn == 0 and bb == 0:
+            return True
+        # black king and black bishop vs white king
+        if bn == 0 and hp.bit_count(bb) == 1 and wn == 0 and wb == 0:
+            return True
+    return False
+
 
 def get_best(moves, scores, is_maximizing):
     # finds best move from scores generated
